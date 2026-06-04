@@ -14,7 +14,7 @@ npm run dev
 ```
 
 Open the local URL printed by Vite. In Cursor Cloud, use the forwarded port for
-the Vite server (usually port `5173`).
+the Vite server on port `5174`.
 
 Controls:
 
@@ -27,3 +27,6 @@ Controls:
 If the page is blank with a stale Drei/Bloom export error, stop the dev server,
 restart it with `npm run dev`, and hard-refresh the browser tab. The dev script
 forces Vite to rebuild its optimized dependency cache.
+
+This project uses port `5174` for dev preview to avoid stale Vite preview
+state from older local servers.
