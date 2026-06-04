@@ -70,6 +70,18 @@ if a mystery point lands on one, selecting it opens an animated film clue card, 
 selecting it again hides the card. If `public/media` contains a `.gif`, the clue card
 uses that GIF first; otherwise it falls back to one of your photos. Found clues are saved in the Cinema Ticket Album in the corner: collected stickers are colorful and clickable, while locked clues stay as dark silhouettes.
 
+## Birthday Gift Reel
+
+The app includes a **Gift Reel** button that opens the birthday prop room:
+
+- Black cat lamp concept with a warm glowing cat silhouette.
+- Acrylic Europe map with glass-like travel photo magnets from `public/media`.
+- Blank film ticket coupons reserved for future promises or dates.
+- Three director's commentary voice-letter placeholders.
+
+A spinning soundtrack record appears in the top-right corner. Hover it to see the
+current soundtrack title.
+
 ## Troubleshooting
 
 If the page is blank with a stale Drei/Bloom export error, stop the dev server,

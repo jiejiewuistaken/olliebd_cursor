@@ -93,6 +93,25 @@ type Clue = {
   palette: 'cyan' | 'gold';
 };
 
+const SOUNDTRACK_TITLE = 'Birthday Cinema Soundtrack';
+
+const FILM_TICKET_COUPONS = ['Admit Two', 'Coming Soon', 'Post-credit Scene'];
+
+const DIRECTOR_COMMENTARY_TRACKS = [
+  {
+    title: 'Commentary 01',
+    hint: 'A memory track for the photo that still feels like a scene from a small film.',
+  },
+  {
+    title: 'Commentary 02',
+    hint: 'A quiet message for the days when Europe feels far from every familiar room.',
+  },
+  {
+    title: 'Commentary 03',
+    hint: 'A future-facing note, saved like the last line before the credits roll.',
+  },
+];
+
 const CLUES: Clue[] = [
   {
     seatId: '2:2',
@@ -199,6 +218,7 @@ function App() {
   const [visibleClueSeatId, setVisibleClueSeatId] = useState<string | null>(null);
   const [collectedClueIds, setCollectedClueIds] = useState<string[]>([]);
   const [isAlbumOpen, setIsAlbumOpen] = useState(false);
+  const [isGiftReelOpen, setIsGiftReelOpen] = useState(false);
   const activeViewpoint =
     viewpoints.find((viewpoint) => viewpoint.id === activeViewpointId) ?? INITIAL_VIEWPOINT;
   const clueImageSrc = useMemo(
@@ -293,6 +313,8 @@ function App() {
         ))}
       </section>
 
+      <SoundtrackRecord title={SOUNDTRACK_TITLE} />
+
       <CinemaTicketAlbum
         clues={CLUES}
         collectedClueIds={collectedClueSet}
@@ -301,9 +323,138 @@ function App() {
         onOpenClue={revealClue}
       />
 
+      <BirthdayGiftReel
+        isOpen={isGiftReelOpen}
+        mediaItems={mediaItems}
+        onToggle={() => setIsGiftReelOpen((isOpen) => !isOpen)}
+      />
+
       {activeClue && <MysteryClueCard clue={activeClue} imageSrc={clueImageSrc} />}
       <div className="vignette" />
     </main>
+  );
+}
+
+function SoundtrackRecord({ title }: { title: string }) {
+  return (
+    <button className="soundtrack-record" type="button" aria-label={title}>
+      <span className="soundtrack-record__disc" />
+      <span className="soundtrack-record__label">{title}</span>
+    </button>
+  );
+}
+
+function BirthdayGiftReel({
+  isOpen,
+  mediaItems,
+  onToggle,
+}: {
+  isOpen: boolean;
+  mediaItems: MediaItem[];
+  onToggle: () => void;
+}) {
+  const photoItems = mediaItems.filter((item) => item.src && item.type === 'photo').slice(0, 7);
+
+  return (
+    <aside className={`gift-reel ${isOpen ? 'open' : ''}`}>
+      <button className="gift-reel__tab" type="button" onClick={onToggle}>
+        <span>Gift Reel</span>
+        <strong>5 scenes</strong>
+      </button>
+
+      {isOpen && (
+        <div className="gift-reel__panel">
+          <div className="gift-reel__header">
+            <p>Birthday prop room</p>
+            <h2>Gifts hidden behind the screen</h2>
+          </div>
+
+          <div className="gift-reel__grid">
+            <BlackCatLampCard />
+            <EuropeMagnetMap mediaItems={photoItems} />
+            <FilmTicketCoupons />
+            <DirectorCommentaryCards />
+          </div>
+        </div>
+      )}
+    </aside>
+  );
+}
+
+function BlackCatLampCard() {
+  return (
+    <article className="gift-card gift-card--cat-lamp">
+      <p className="gift-card__eyebrow">Gift 01</p>
+      <h3>Black Cat Lamp</h3>
+      <div className="cat-lamp" aria-hidden="true">
+        <span className="cat-lamp__glow" />
+        <span className="cat-lamp__body" />
+        <span className="cat-lamp__tail" />
+      </div>
+      <p>A warm little guardian for nights across different time zones.</p>
+    </article>
+  );
+}
+
+function EuropeMagnetMap({ mediaItems }: { mediaItems: MediaItem[] }) {
+  const fallbackMagnets = Array.from({ length: 5 }, (_, index) => ({
+    src: undefined,
+    title: `Magnet ${index + 1}`,
+  }));
+  const magnets = mediaItems.length > 0 ? mediaItems : fallbackMagnets;
+
+  return (
+    <article className="gift-card gift-card--map">
+      <p className="gift-card__eyebrow">Gift 02</p>
+      <h3>Acrylic Europe Map</h3>
+      <div className="europe-map" aria-label="Europe travel photo magnet concept">
+        <span className="europe-map__shape" />
+        <span className="europe-map__shine" />
+        {magnets.slice(0, 6).map((item, index) => (
+          <span key={item.src ?? item.title} className={`photo-magnet photo-magnet--${index + 1}`}>
+            {item.src ? <img src={encodeURI(item.src)} alt="Travel magnet" /> : <span />}
+          </span>
+        ))}
+      </div>
+      <p>Travel photos become glassy acrylic magnets moving across Europe.</p>
+    </article>
+  );
+}
+
+function FilmTicketCoupons() {
+  return (
+    <article className="gift-card gift-card--tickets">
+      <p className="gift-card__eyebrow">Gift 03</p>
+      <h3>Blank Film Ticket Coupons</h3>
+      <div className="coupon-stack">
+        {FILM_TICKET_COUPONS.map((label) => (
+          <span key={label} className="blank-ticket">
+            <strong>{label}</strong>
+            <em>to be written later</em>
+          </span>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function DirectorCommentaryCards() {
+  return (
+    <article className="gift-card gift-card--commentary">
+      <p className="gift-card__eyebrow">Gift 05</p>
+      <h3>Director's Commentary</h3>
+      <div className="commentary-list">
+        {DIRECTOR_COMMENTARY_TRACKS.map((track) => (
+          <button key={track.title} className="commentary-track" type="button">
+            <span className="commentary-track__play" />
+            <span>
+              <strong>{track.title}</strong>
+              <em>{track.hint}</em>
+            </span>
+          </button>
+        ))}
+      </div>
+    </article>
   );
 }
 
