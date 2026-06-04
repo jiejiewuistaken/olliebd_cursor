@@ -113,70 +113,94 @@ select {
   user-select: none;
 }
 
-.viewpoint-dock {
+.seat-map {
   position: fixed;
   right: clamp(1rem, 3vw, 2rem);
   bottom: clamp(1rem, 4vw, 2.5rem);
   z-index: 3;
-  display: grid;
-  gap: 0.5rem;
-  width: min(15rem, calc(100vw - 2rem));
+  width: min(24rem, calc(100vw - 2rem));
+  padding: 0.9rem;
+  border: 1px solid rgba(255, 210, 142, 0.24);
+  border-radius: 1rem;
+  background: linear-gradient(135deg, rgba(5, 5, 7, 0.76), rgba(31, 13, 7, 0.62));
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.36);
+  backdrop-filter: blur(14px);
 }
 
-.viewpoint-dock button {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  width: 100%;
-  padding: 0.62rem 0.72rem;
-  border: 1px solid rgba(255, 210, 142, 0.22);
+.seat-map__screen {
+  width: 64%;
+  margin: 0 auto 0.85rem;
+  padding: 0.22rem 0.4rem;
+  border: 1px solid rgba(94, 250, 255, 0.32);
   border-radius: 999px;
-  background: rgba(8, 7, 8, 0.68);
-  box-shadow: 0 0.75rem 1.8rem rgba(0, 0, 0, 0.28);
-  color: rgba(255, 242, 213, 0.78);
-  cursor: pointer;
-  backdrop-filter: blur(12px);
-  transition:
-    border-color 160ms ease,
-    background 160ms ease,
-    color 160ms ease,
-    transform 160ms ease;
-}
-
-.viewpoint-dock button:hover,
-.viewpoint-dock button.active {
-  border-color: rgba(94, 250, 255, 0.62);
-  background: rgba(16, 25, 30, 0.78);
-  color: #fff7e6;
-  transform: translateX(-0.12rem);
-}
-
-.viewpoint-dock span {
-  display: grid;
-  width: 1.45rem;
-  height: 1.45rem;
-  place-items: center;
-  border-radius: 50%;
-  background: rgba(255, 179, 74, 0.22);
+  background: rgba(94, 250, 255, 0.1);
   color: #5efaff;
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   font-weight: 900;
+  letter-spacing: 0.14em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.seat-map__rows {
+  display: grid;
+  gap: 0.48rem;
+}
+
+.seat-map__row {
+  display: grid;
+  grid-template-columns: 1.9rem 1fr;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.seat-map__row-label {
+  color: rgba(255, 242, 213, 0.54);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.seat-map__seats {
+  display: grid;
+  grid-template-columns: repeat(var(--seat-count), minmax(0, 1fr));
+  gap: 0.28rem;
+}
+
+.seat-map__seat {
+  aspect-ratio: 1;
+  min-width: 0;
+  border: 1px solid rgba(255, 210, 142, 0.24);
+  border-radius: 0.28rem 0.28rem 0.48rem 0.48rem;
+  background: linear-gradient(180deg, rgba(88, 28, 39, 0.9), rgba(35, 12, 17, 0.92));
+  box-shadow: inset 0 -0.18rem 0 rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
+}
+
+.seat-map__seat:hover,
+.seat-map__seat.selected {
+  border-color: rgba(94, 250, 255, 0.74);
+  box-shadow:
+    inset 0 -0.18rem 0 rgba(0, 0, 0, 0.22),
+    0 0 0.95rem rgba(94, 250, 255, 0.18);
+  transform: translateY(-0.06rem);
+}
+
+.seat-map__seat.collected {
+  background: linear-gradient(180deg, rgba(255, 179, 74, 0.95), rgba(95, 35, 8, 0.94));
 }
 
 @media (max-width: 720px) {
-  .viewpoint-dock {
+  .seat-map {
     right: 1rem;
-    bottom: auto;
-    top: 1rem;
-    width: min(13rem, calc(100vw - 2rem));
-  }
-
-  .viewpoint-dock button {
-    padding: 0.48rem 0.56rem;
-    font-size: 0.82rem;
+    bottom: 1rem;
+    width: min(22rem, calc(100vw - 2rem));
   }
 }
-
 
 .mystery-card {
   position: fixed;
@@ -471,30 +495,34 @@ select {
 .clue-logo--cat-orbit::before {
   width: 2.18rem;
   height: 2.18rem;
-  border: 0.11rem solid rgba(255, 247, 216, 0.82);
+  border: 0.1rem solid rgba(255, 247, 216, 0.84);
   border-radius: 45% 52% 48% 56%;
   box-shadow:
-    0 0 0 0.05rem rgba(7, 9, 13, 0.28),
+    0 0 0 0.05rem rgba(7, 9, 13, 0.24),
     0 0 1rem rgba(255, 223, 139, 0.28);
   transform: rotate(-8deg);
 }
 
 .clue-logo--cat-orbit::after {
-  width: 2.38rem;
-  height: 2.38rem;
-  border: 0.06rem dashed rgba(255, 247, 216, 0.45);
+  width: 2.42rem;
+  height: 2.42rem;
+  border: 0.055rem dashed rgba(255, 247, 216, 0.44);
   border-radius: 50%;
   transform: rotate(12deg);
 }
 
 .clue-logo--cat-orbit > span {
-  width: 0.72rem;
-  height: 0.42rem;
-  border: 0.1rem solid #050506;
-  border-radius: 52% 48% 46% 54%;
-  background: transparent;
-  transform-origin: 1.28rem 0.2rem;
-  animation: cat-walk-circle 4.8s linear infinite;
+  width: 0.78rem;
+  height: 0.52rem;
+  border-radius: 55% 45% 48% 50%;
+  background: #050506;
+  box-shadow:
+    inset 0.08rem 0.06rem 0 rgba(255, 255, 255, 0.08),
+    0 0.08rem 0 0 rgba(5, 5, 6, 0.85),
+    -0.16rem 0.34rem 0 -0.12rem #050506,
+    0.18rem 0.34rem 0 -0.12rem #050506;
+  transform-origin: 1.25rem 0.26rem;
+  animation: cat-walk-circle 5.2s linear infinite;
 }
 
 .clue-logo--cat-orbit > span::before,
@@ -504,26 +532,28 @@ select {
 }
 
 .clue-logo--cat-orbit > span::before {
-  left: 0.08rem;
-  top: -0.2rem;
-  width: 0.34rem;
-  height: 0.34rem;
-  border: 0.09rem solid #050506;
+  left: -0.05rem;
+  top: -0.28rem;
+  width: 0.48rem;
+  height: 0.44rem;
   border-radius: 50%;
   background:
-    linear-gradient(135deg, #050506 0 35%, transparent 36%),
-    linear-gradient(225deg, #050506 0 35%, transparent 36%);
+    radial-gradient(circle at 34% 56%, #ffe7a8 0 0.035rem, transparent 0.04rem),
+    radial-gradient(circle at 62% 56%, #ffe7a8 0 0.035rem, transparent 0.04rem),
+    linear-gradient(135deg, #050506 0 22%, transparent 23%) 0 0 / 50% 50% no-repeat,
+    linear-gradient(225deg, #050506 0 22%, transparent 23%) 100% 0 / 50% 50% no-repeat,
+    #050506;
 }
 
 .clue-logo--cat-orbit > span::after {
-  right: -0.34rem;
-  top: 0.06rem;
-  width: 0.52rem;
-  height: 0.44rem;
-  border-top: 0.1rem solid #050506;
-  border-right: 0.1rem solid #050506;
+  right: -0.38rem;
+  top: 0.1rem;
+  width: 0.58rem;
+  height: 0.5rem;
+  border-top: 0.12rem solid #050506;
+  border-right: 0.12rem solid #050506;
   border-radius: 50%;
-  transform: rotate(18deg);
+  transform: rotate(20deg);
 }
 
 .mystery-card .clue-logo--cat-orbit {
@@ -532,10 +562,10 @@ select {
 
 @keyframes cat-walk-circle {
   from {
-    transform: rotate(0deg) translateX(1.08rem) rotate(0deg);
+    transform: rotate(0deg) translateX(1.06rem) rotate(0deg);
   }
   to {
-    transform: rotate(360deg) translateX(1.08rem) rotate(-360deg);
+    transform: rotate(360deg) translateX(1.06rem) rotate(-360deg);
   }
 }
 

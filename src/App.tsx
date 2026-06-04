@@ -1,7 +1,7 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Float, Html, OrbitControls, Text } from '@react-three/drei';
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
-import { Suspense, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState, type CSSProperties, type MutableRefObject } from 'react';
 import * as THREE from 'three';
 
 type MediaItem = {
@@ -65,15 +65,45 @@ const FALLBACK_MEDIA_ITEMS: MediaItem[] = [
   },
 ];
 
-const SPECIAL_SEATS = new Set(['2:2', '5:7']);
+const SEAT_LAYOUT = [7, 9, 10] as const;
+const SEAT_SPACING = 1.08;
+const ROW_DEPTH = 1.35;
+const FIRST_ROW_Z = -1.95;
+const SPECIAL_SEATS = new Set(['1:3', '1:6', '2:2', '2:7', '3:4', '3:9']);
 const GIFT_SEATS = SPECIAL_SEATS;
-const SEAT_COLUMNS = [-3, -2, -1, 0, 1, 2, 3];
+const SCREEN_TARGET: [number, number, number] = [0, 2.55, -7.45];
+
+type SeatRef = {
+  row: number;
+  seat: number;
+  seatId: string;
+};
+
+function seatCountForRow(rowNumber: number) {
+  return SEAT_LAYOUT[rowNumber - 1] ?? SEAT_LAYOUT[0];
+}
 
 function seatPosition(rowNumber: number, seatNumber: number): [number, number, number] {
   const rowIndex = rowNumber - 1;
-  const column = SEAT_COLUMNS[seatNumber - 1] ?? 0;
+  const seatCount = seatCountForRow(rowNumber);
+  const centeredSeatIndex = seatNumber - (seatCount + 1) / 2;
 
-  return [column * 1.25, 1.52 + rowIndex * 0.08, -1.94 + rowIndex * 1.35];
+  return [centeredSeatIndex * SEAT_SPACING, rowIndex * 0.08, FIRST_ROW_Z + rowIndex * ROW_DEPTH];
+}
+
+function seatViewpoint(rowNumber: number, seatNumber: number): Viewpoint {
+  const [x, , z] = seatPosition(rowNumber, seatNumber);
+  const eyeHeight = 1.52 + (rowNumber - 1) * 0.1;
+  const seatId = `${rowNumber}:${seatNumber}`;
+
+  return {
+    id: seatId,
+    key: '',
+    label: `Row ${rowNumber} Seat ${seatNumber}`,
+    position: [x, eyeHeight, z + 0.54],
+    target: [x * 0.12, 2.5, -7.45],
+    specialSeatId: SPECIAL_SEATS.has(seatId) ? seatId : undefined,
+  };
 }
 
 type Viewpoint = {
@@ -97,14 +127,42 @@ const SOUNDTRACK_TITLE = 'Birthday Cinema Soundtrack';
 
 const CLUES: Clue[] = [
   {
-    seatId: '2:2',
-    title: 'Moonlit Ticket',
-    hint: 'For the nights when distance is loud, press play and let this little light answer back.',
+    seatId: '1:3',
+    title: 'Little Night Watcher',
+    hint: 'A small shadow walks in circles until the room learns how to glow.',
     symbol: 'cat-orbit',
     palette: 'cyan',
   },
   {
-    seatId: '5:7',
+    seatId: '1:6',
+    title: 'Window Magnet',
+    hint: 'A tiny clear window remembers a city better than a suitcase can.',
+    symbol: 'stamp',
+    palette: 'gold',
+  },
+  {
+    seatId: '2:2',
+    title: 'Moonlit Ticket',
+    hint: 'For the nights when distance is loud, press play and let this little light answer back.',
+    symbol: 'moon',
+    palette: 'cyan',
+  },
+  {
+    seatId: '2:7',
+    title: 'Borderless Map',
+    hint: 'Not a route yet, but it already knows which direction feels warm.',
+    symbol: 'stamp',
+    palette: 'gold',
+  },
+  {
+    seatId: '3:4',
+    title: 'Commentary Track',
+    hint: 'A voice behind the screen, explaining the part that subtitles missed.',
+    symbol: 'moon',
+    palette: 'cyan',
+  },
+  {
+    seatId: '3:9',
     title: 'Postcard Reel',
     hint: 'Not a plane ticket yet, but it knows the direction of a future arrival.',
     symbol: 'stamp',
@@ -116,48 +174,23 @@ function clueForSeat(seatId: string) {
   return CLUES.find((clue) => clue.seatId === seatId);
 }
 
-const SCREEN_TARGET: [number, number, number] = [0, 2.55, -7.45];
 const INITIAL_VIEWPOINT: Viewpoint = {
   id: 'back-row',
   key: '1',
   label: 'Back row',
   // Start behind the seats so the room immediately reads as a cinema.
-  position: [0, 2.05, 4.15],
-  target: [0, 1.95, -4.8],
+  position: [0, 2.12, 2.72],
+  target: [0, 2.18, -5.8],
 };
 
-const FIXED_VIEWPOINTS: Viewpoint[] = [
-  INITIAL_VIEWPOINT,
-  {
-    id: 'left-aisle',
-    key: '2',
-    label: 'Left aisle',
-    position: [-5.35, 1.58, -0.65],
-    target: [-0.7, 2.42, -7.4],
-  },
-];
-
-const MYSTERY_SEAT_CANDIDATES: Array<Pick<Viewpoint, 'position' | 'target' | 'specialSeatId'>> = [
-  { position: seatPosition(2, 2), target: [-0.4, 2.46, -7.45], specialSeatId: '2:2' },
-  { position: seatPosition(5, 7), target: [0.65, 2.52, -7.35], specialSeatId: '5:7' },
-  { position: seatPosition(1, 2), target: [-0.35, 2.5, -7.45] },
-  { position: seatPosition(1, 6), target: [0.35, 2.5, -7.45] },
-  { position: seatPosition(3, 1), target: [-0.7, 2.5, -7.35] },
-  { position: seatPosition(3, 7), target: [0.7, 2.5, -7.35] },
-  { position: seatPosition(4, 3), target: [-0.3, 2.42, -7.35] },
-  { position: seatPosition(4, 5), target: [0.3, 2.42, -7.35] },
-];
-
-function createViewpoints() {
-  const shuffledSeats = [...MYSTERY_SEAT_CANDIDATES].sort(() => Math.random() - 0.5);
-  const mysteryViewpoints = shuffledSeats.slice(0, 2).map((seat, index) => ({
-    id: `mystery-point-${index + 1}`,
-    key: String(index + 3),
-    label: `Mystery point ${index + 1}`,
-    ...seat,
-  }));
-
-  return [...FIXED_VIEWPOINTS, ...mysteryViewpoints];
+function createSeatRefs(): SeatRef[] {
+  return SEAT_LAYOUT.flatMap((seatCount, rowIndex) =>
+    Array.from({ length: seatCount }, (_, seatIndex) => ({
+      row: rowIndex + 1,
+      seat: seatIndex + 1,
+      seatId: `${rowIndex + 1}:${seatIndex + 1}`,
+    })),
+  );
 }
 
 function useMediaItems() {
@@ -195,14 +228,13 @@ function useMediaItems() {
 }
 
 function App() {
-  const viewpoints = useMemo(() => createViewpoints(), []);
+  const seatRefs = useMemo(() => createSeatRefs(), []);
   const mediaItems = useMediaItems();
-  const [activeViewpointId, setActiveViewpointId] = useState(INITIAL_VIEWPOINT.id);
+  const [activeViewpoint, setActiveViewpoint] = useState<Viewpoint>(INITIAL_VIEWPOINT);
+  const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
   const [visibleClueSeatId, setVisibleClueSeatId] = useState<string | null>(null);
   const [collectedClueIds, setCollectedClueIds] = useState<string[]>([]);
   const [isAlbumOpen, setIsAlbumOpen] = useState(false);
-  const activeViewpoint =
-    viewpoints.find((viewpoint) => viewpoint.id === activeViewpointId) ?? INITIAL_VIEWPOINT;
   const clueImageSrc = useMemo(
     () =>
       mediaItems.find((item) => item.src?.toLowerCase().endsWith('.gif'))?.src ??
@@ -220,38 +252,26 @@ function App() {
     setVisibleClueSeatId(seatId);
   }
 
-  function selectViewpoint(viewpoint: Viewpoint) {
-    setActiveViewpointId(viewpoint.id);
+  function selectSeat(seatRef: SeatRef) {
+    const nextViewpoint = seatViewpoint(seatRef.row, seatRef.seat);
+    setActiveViewpoint(nextViewpoint);
+    setSelectedSeatId(seatRef.seatId);
 
-    if (!viewpoint.specialSeatId) {
+    if (!nextViewpoint.specialSeatId) {
+      setVisibleClueSeatId(null);
       return;
     }
 
     setCollectedClueIds((currentIds) =>
-      currentIds.includes(viewpoint.specialSeatId!) ? currentIds : [...currentIds, viewpoint.specialSeatId!],
+      currentIds.includes(nextViewpoint.specialSeatId!)
+        ? currentIds
+        : [...currentIds, nextViewpoint.specialSeatId!],
     );
     setVisibleClueSeatId((currentSeatId) =>
-      currentSeatId === viewpoint.specialSeatId && activeViewpointId === viewpoint.id
-        ? null
-        : viewpoint.specialSeatId!,
+      currentSeatId === nextViewpoint.specialSeatId ? null : nextViewpoint.specialSeatId!,
     );
   }
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const matchingViewpoint = viewpoints.find((viewpoint) => viewpoint.key === event.key);
-
-      if (matchingViewpoint) {
-        selectViewpoint(matchingViewpoint);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [activeViewpointId, viewpoints]);
 
   return (
     <main className="app-shell">
@@ -277,23 +297,16 @@ function App() {
 
       <section className="hud">
         <p className="eyebrow">React Three Fiber cinema</p>
-        <h1>{activeViewpoint.label}: drag to look around the cinema.</h1>
-        <p>Press 1-4 or use the buttons to move between cinema viewpoints.</p>
+        <h1>{selectedSeatId ? activeViewpoint.label : 'Choose a seat from the map.'}</h1>
+        <p>Click any seat on the floating map to sit there, then drag freely to explore.</p>
       </section>
 
-      <section className="viewpoint-dock" aria-label="Cinema viewpoints">
-        {viewpoints.map((viewpoint) => (
-          <button
-            key={viewpoint.id}
-            className={viewpoint.id === activeViewpoint.id ? 'active' : undefined}
-            type="button"
-            onClick={() => selectViewpoint(viewpoint)}
-          >
-            <span>{viewpoint.key}</span>
-            {viewpoint.label}
-          </button>
-        ))}
-      </section>
+      <SeatMap
+        seatRefs={seatRefs}
+        selectedSeatId={selectedSeatId}
+        collectedClueIds={collectedClueSet}
+        onSelectSeat={selectSeat}
+      />
 
       <SoundtrackRecord title={SOUNDTRACK_TITLE} />
 
@@ -309,6 +322,52 @@ function App() {
       {activeClue && <MysteryClueCard clue={activeClue} imageSrc={clueImageSrc} />}
       <div className="vignette" />
     </main>
+  );
+}
+
+function SeatMap({
+  seatRefs,
+  selectedSeatId,
+  collectedClueIds,
+  onSelectSeat,
+}: {
+  seatRefs: SeatRef[];
+  selectedSeatId: string | null;
+  collectedClueIds: Set<string>;
+  onSelectSeat: (seatRef: SeatRef) => void;
+}) {
+  return (
+    <section className="seat-map" aria-label="Cinema seat map">
+      <div className="seat-map__screen">Screen</div>
+      <div className="seat-map__rows">
+        {SEAT_LAYOUT.map((seatCount, rowIndex) => {
+          const rowNumber = rowIndex + 1;
+          const rowSeats = seatRefs.filter((seatRef) => seatRef.row === rowNumber);
+
+          return (
+            <div key={rowNumber} className="seat-map__row" style={{ '--seat-count': seatCount } as CSSProperties}>
+              <span className="seat-map__row-label">R{rowNumber}</span>
+              <div className="seat-map__seats">
+                {rowSeats.map((seatRef) => {
+                  const isSelected = selectedSeatId === seatRef.seatId;
+                  const isCollected = collectedClueIds.has(seatRef.seatId);
+
+                  return (
+                    <button
+                      key={seatRef.seatId}
+                      className={`seat-map__seat ${isSelected ? 'selected' : ''} ${isCollected ? 'collected' : ''}`}
+                      type="button"
+                      aria-label={`Row ${seatRef.row} Seat ${seatRef.seat}`}
+                      onClick={() => onSelectSeat(seatRef)}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -997,26 +1056,29 @@ function PhotoSparkles({ color }: { color: string }) {
 function SeatRows() {
   const rows = useMemo(
     () =>
-      Array.from({ length: 5 }, (_, row) => ({
-        row,
-        z: -1.7 + row * 1.35,
-        y: row * 0.08,
+      SEAT_LAYOUT.map((seatCount, rowIndex) => ({
+        row: rowIndex + 1,
+        seats: Array.from({ length: seatCount }, (_, seatIndex) => seatIndex + 1),
       })),
     [],
   );
 
   return (
     <group>
-      {rows.map(({ row, z, y }) => (
-        <group key={row} position={[0, y, z]}>
-          {SEAT_COLUMNS.map((column, seatIndex) => (
-            <CinemaChair
-              key={`${row}:${column}`}
-              position={[column * 1.25, 0, 0]}
-              hasGift={GIFT_SEATS.has(`${row + 1}:${seatIndex + 1}`)}
-              label={`Row ${row + 1} Seat ${seatIndex + 1}`}
-            />
-          ))}
+      {rows.map(({ row, seats }) => (
+        <group key={row}>
+          {seats.map((seat) => {
+            const seatId = `${row}:${seat}`;
+
+            return (
+              <CinemaChair
+                key={seatId}
+                position={seatPosition(row, seat)}
+                hasGift={GIFT_SEATS.has(seatId)}
+                label={`Row ${row} Seat ${seat}`}
+              />
+            );
+          })}
         </group>
       ))}
     </group>

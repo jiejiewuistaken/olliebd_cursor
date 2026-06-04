@@ -56,19 +56,11 @@ If `public/media` is empty, the screen falls back to the built-in procedural fil
 The scene uses controlled waypoint movement so it keeps the cinematic composition
 without full free-roam physics.
 
-Use the buttons on the right side of the screen, or press the keys below. The default entry point is the back row so you can see the seats and screen together:
+A floating seat map stays on the page. The cinema has 7 seats in row 1, 9 seats in row 2, and 10 seats in row 3.
 
-- `1` = Back row
-- `2` = Left aisle
-- `3` = Mystery point 1 (random seat)
-- `4` = Mystery point 2 (random seat)
+Click any seat on the map to move to that seat. The camera moves there once, then releases control so you can drag freely around the cinema with OrbitControls.
 
-The camera smoothly moves to a selected viewpoint once, then releases control so
-you can drag freely around the cinema with OrbitControls. Mystery points are randomly selected seat views
-each time the app loads. Row 2 Seat 2 and Row 5 Seat 7 are fixed clue seats;
-if a mystery point lands on one, selecting it opens an animated film clue card, and
-selecting it again hides the card. If `public/media` contains a `.gif`, the clue card
-uses that GIF first; otherwise it falls back to one of your photos. Found clues are saved in the Cinema Ticket Album in the corner: collected stickers are colorful and clickable, while locked clues stay as dark silhouettes.
+Some seats hide surprise clue cards. Found clues are saved in the Cinema Ticket Album in the corner: collected stickers are colorful and clickable, while locked clues stay as dark silhouettes. If `public/media` contains a `.gif`, the clue card uses that GIF first; otherwise it falls back to one of your photos.
 
 ## Private Gift Planning
 
