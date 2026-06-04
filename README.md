@@ -21,3 +21,9 @@ Controls:
 - Drag to rotate around the cinema.
 - Scroll to zoom in and out.
 - Look across the seats to find the glowing gift hints.
+
+## Troubleshooting
+
+If the page is blank with a stale Drei/Bloom export error, stop the dev server,
+restart it with `npm run dev`, and hard-refresh the browser tab. The dev script
+forces Vite to rebuild its optimized dependency cache.
