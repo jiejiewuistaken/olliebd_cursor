@@ -85,6 +85,37 @@ type Viewpoint = {
   specialSeatId?: string;
 };
 
+type Clue = {
+  seatId: string;
+  title: string;
+  hint: string;
+  symbol: string;
+  palette: 'cyan' | 'gold';
+};
+
+const SOUNDTRACK_TITLE = 'Birthday Cinema Soundtrack';
+
+const CLUES: Clue[] = [
+  {
+    seatId: '2:2',
+    title: 'Moonlit Ticket',
+    hint: 'For the nights when distance is loud, press play and let this little light answer back.',
+    symbol: 'cat-orbit',
+    palette: 'cyan',
+  },
+  {
+    seatId: '5:7',
+    title: 'Postcard Reel',
+    hint: 'Not a plane ticket yet, but it knows the direction of a future arrival.',
+    symbol: 'stamp',
+    palette: 'gold',
+  },
+];
+
+function clueForSeat(seatId: string) {
+  return CLUES.find((clue) => clue.seatId === seatId);
+}
+
 const SCREEN_TARGET: [number, number, number] = [0, 2.55, -7.45];
 const INITIAL_VIEWPOINT: Viewpoint = {
   id: 'back-row',
@@ -167,7 +198,9 @@ function App() {
   const viewpoints = useMemo(() => createViewpoints(), []);
   const mediaItems = useMediaItems();
   const [activeViewpointId, setActiveViewpointId] = useState(INITIAL_VIEWPOINT.id);
-  const [visibleCloudSeatId, setVisibleCloudSeatId] = useState<string | null>(null);
+  const [visibleClueSeatId, setVisibleClueSeatId] = useState<string | null>(null);
+  const [collectedClueIds, setCollectedClueIds] = useState<string[]>([]);
+  const [isAlbumOpen, setIsAlbumOpen] = useState(false);
   const activeViewpoint =
     viewpoints.find((viewpoint) => viewpoint.id === activeViewpointId) ?? INITIAL_VIEWPOINT;
   const clueImageSrc = useMemo(
@@ -177,22 +210,31 @@ function App() {
       mediaItems.find((item) => item.src)?.src,
     [mediaItems],
   );
-  const activeCloudSeatId =
-    activeViewpoint.specialSeatId && visibleCloudSeatId === activeViewpoint.specialSeatId
-      ? activeViewpoint.specialSeatId
-      : null;
+  const activeClue = visibleClueSeatId ? clueForSeat(visibleClueSeatId) : undefined;
+  const collectedClueSet = useMemo(() => new Set(collectedClueIds), [collectedClueIds]);
+
+  function revealClue(seatId: string) {
+    setCollectedClueIds((currentIds) =>
+      currentIds.includes(seatId) ? currentIds : [...currentIds, seatId],
+    );
+    setVisibleClueSeatId(seatId);
+  }
 
   function selectViewpoint(viewpoint: Viewpoint) {
     setActiveViewpointId(viewpoint.id);
-    setVisibleCloudSeatId((currentSeatId) => {
-      if (!viewpoint.specialSeatId) {
-        return null;
-      }
 
-      return currentSeatId === viewpoint.specialSeatId && activeViewpointId === viewpoint.id
+    if (!viewpoint.specialSeatId) {
+      return;
+    }
+
+    setCollectedClueIds((currentIds) =>
+      currentIds.includes(viewpoint.specialSeatId!) ? currentIds : [...currentIds, viewpoint.specialSeatId!],
+    );
+    setVisibleClueSeatId((currentSeatId) =>
+      currentSeatId === viewpoint.specialSeatId && activeViewpointId === viewpoint.id
         ? null
-        : viewpoint.specialSeatId;
-    });
+        : viewpoint.specialSeatId!,
+    );
   }
 
   useEffect(() => {
@@ -253,27 +295,107 @@ function App() {
         ))}
       </section>
 
-      {activeCloudSeatId && (
-        <MysteryClueCard seatId={activeCloudSeatId} imageSrc={clueImageSrc} />
-      )}
+      <SoundtrackRecord title={SOUNDTRACK_TITLE} />
+
+      <CinemaTicketAlbum
+        clues={CLUES}
+        collectedClueIds={collectedClueSet}
+        isOpen={isAlbumOpen}
+        onToggle={() => setIsAlbumOpen((isOpen) => !isOpen)}
+        onOpenClue={revealClue}
+      />
+
+
+      {activeClue && <MysteryClueCard clue={activeClue} imageSrc={clueImageSrc} />}
       <div className="vignette" />
     </main>
   );
 }
 
-function MysteryClueCard({ seatId, imageSrc }: { seatId: string; imageSrc?: string }) {
-  const [row, seat] = seatId.split(':');
+function SoundtrackRecord({ title }: { title: string }) {
+  return (
+    <button className="soundtrack-record" type="button" aria-label={title}>
+      <span className="soundtrack-record__disc" />
+      <span className="soundtrack-record__label">{title}</span>
+    </button>
+  );
+}
+
+function ClueLogo({ clue, isCollected }: { clue: Clue; isCollected: boolean }) {
+  return (
+    <span className={
+      `clue-logo clue-logo--${clue.symbol} clue-logo--${clue.palette} ${isCollected ? 'collected' : ''}`
+    }>
+      <span />
+    </span>
+  );
+}
+
+function CinemaTicketAlbum({
+  clues,
+  collectedClueIds,
+  isOpen,
+  onToggle,
+  onOpenClue,
+}: {
+  clues: Clue[];
+  collectedClueIds: Set<string>;
+  isOpen: boolean;
+  onToggle: () => void;
+  onOpenClue: (seatId: string) => void;
+}) {
+  return (
+    <aside className={`ticket-album ${isOpen ? 'open' : ''}`}>
+      <button className="ticket-album__tab" type="button" onClick={onToggle}>
+        <span>Album</span>
+        <strong>{collectedClueIds.size}/{clues.length}</strong>
+      </button>
+
+      {isOpen && (
+        <div className="ticket-album__book">
+          <div className="ticket-album__header">
+            <p>Birthday archive</p>
+            <h2>Cinema Ticket Album</h2>
+          </div>
+          <div className="ticket-album__grid">
+            {clues.map((clue) => {
+              const isCollected = collectedClueIds.has(clue.seatId);
+
+              return (
+                <button
+                  key={clue.seatId}
+                  className={`ticket-sticker ${isCollected ? 'collected' : 'locked'}`}
+                  type="button"
+                  disabled={!isCollected}
+                  onClick={() => onOpenClue(clue.seatId)}
+                >
+                  <ClueLogo clue={clue} isCollected={isCollected} />
+                  <span>{isCollected ? clue.title : 'Locked scene'}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </aside>
+  );
+}
+
+function MysteryClueCard({ clue, imageSrc }: { clue: Clue; imageSrc?: string }) {
+  const [row, seat] = clue.seatId.split(':');
 
   return (
-    <section className="mystery-card" aria-live="polite">
+    <section className={`mystery-card mystery-card--${clue.palette}`} aria-live="polite">
       <div className="mystery-card__sprockets" aria-hidden="true" />
       <div className="mystery-card__content">
         <p className="mystery-card__eyebrow">Found frame</p>
-        <h2>Row {row} Seat {seat}</h2>
+        <ClueLogo clue={clue} isCollected />
+        <h2>{clue.title}</h2>
+        <p className="mystery-card__seat">Row {row} Seat {seat}</p>
         <div className="mystery-card__image">
           {imageSrc ? <img src={encodeURI(imageSrc)} alt="Mystery clue" /> : <span>?</span>}
         </div>
-        <p>Hit the same mystery point again to hide this card.</p>
+        <p>{clue.hint}</p>
       </div>
       <div className="mystery-card__sprockets" aria-hidden="true" />
     </section>
