@@ -100,7 +100,7 @@ const CLUES: Clue[] = [
     seatId: '2:2',
     title: 'Moonlit Ticket',
     hint: 'For the nights when distance is loud, press play and let this little light answer back.',
-    symbol: 'moon',
+    symbol: 'cat-orbit',
     palette: 'cyan',
   },
   {

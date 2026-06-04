@@ -461,6 +461,84 @@ select {
   background: linear-gradient(145deg, #5c2505, #ffb84d);
 }
 
+.clue-logo--cat-orbit.collected {
+  overflow: hidden;
+  background:
+    radial-gradient(circle, rgba(255, 229, 169, 0.18), transparent 58%),
+    linear-gradient(145deg, #10303a, #1ce7ff);
+}
+
+.clue-logo--cat-orbit::before {
+  width: 2.18rem;
+  height: 2.18rem;
+  border: 0.11rem solid rgba(255, 247, 216, 0.82);
+  border-radius: 45% 52% 48% 56%;
+  box-shadow:
+    0 0 0 0.05rem rgba(7, 9, 13, 0.28),
+    0 0 1rem rgba(255, 223, 139, 0.28);
+  transform: rotate(-8deg);
+}
+
+.clue-logo--cat-orbit::after {
+  width: 2.38rem;
+  height: 2.38rem;
+  border: 0.06rem dashed rgba(255, 247, 216, 0.45);
+  border-radius: 50%;
+  transform: rotate(12deg);
+}
+
+.clue-logo--cat-orbit > span {
+  width: 0.72rem;
+  height: 0.42rem;
+  border: 0.1rem solid #050506;
+  border-radius: 52% 48% 46% 54%;
+  background: transparent;
+  transform-origin: 1.28rem 0.2rem;
+  animation: cat-walk-circle 4.8s linear infinite;
+}
+
+.clue-logo--cat-orbit > span::before,
+.clue-logo--cat-orbit > span::after {
+  position: absolute;
+  content: "";
+}
+
+.clue-logo--cat-orbit > span::before {
+  left: 0.08rem;
+  top: -0.2rem;
+  width: 0.34rem;
+  height: 0.34rem;
+  border: 0.09rem solid #050506;
+  border-radius: 50%;
+  background:
+    linear-gradient(135deg, #050506 0 35%, transparent 36%),
+    linear-gradient(225deg, #050506 0 35%, transparent 36%);
+}
+
+.clue-logo--cat-orbit > span::after {
+  right: -0.34rem;
+  top: 0.06rem;
+  width: 0.52rem;
+  height: 0.44rem;
+  border-top: 0.1rem solid #050506;
+  border-right: 0.1rem solid #050506;
+  border-radius: 50%;
+  transform: rotate(18deg);
+}
+
+.mystery-card .clue-logo--cat-orbit {
+  transform: scale(1.12);
+}
+
+@keyframes cat-walk-circle {
+  from {
+    transform: rotate(0deg) translateX(1.08rem) rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg) translateX(1.08rem) rotate(-360deg);
+  }
+}
+
 .clue-logo > span,
 .clue-logo::before,
 .clue-logo::after {
