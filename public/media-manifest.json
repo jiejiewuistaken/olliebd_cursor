@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "title": "Photo2",
+    "type": "photo",
+    "src": "/media/photo2.jpeg"
+  },
+  {
+    "title": "Photo3",
+    "type": "photo",
+    "src": "/media/photo3.jpeg"
+  }
+]
