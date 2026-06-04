@@ -1,12 +1,42 @@
 [
   {
-    "title": "Photo2",
+    "title": "Nyc 副本",
     "type": "photo",
-    "src": "/media/photo2.jpeg"
+    "src": "/media/nyc_副本.jpg"
   },
   {
-    "title": "Photo3",
+    "title": "Nyc 副本2",
     "type": "photo",
-    "src": "/media/photo3.jpeg"
+    "src": "/media/nyc_副本2.jpg"
+  },
+  {
+    "title": "Nyc 副本3",
+    "type": "photo",
+    "src": "/media/nyc_副本3.jpg"
+  },
+  {
+    "title": "Nyc 副本4",
+    "type": "photo",
+    "src": "/media/nyc_副本4.jpg"
+  },
+  {
+    "title": "Nyc 副本5",
+    "type": "photo",
+    "src": "/media/nyc_副本5.jpg"
+  },
+  {
+    "title": "Nyc 副本6",
+    "type": "photo",
+    "src": "/media/nyc_副本6.jpg"
+  },
+  {
+    "title": "Nyc 副本7",
+    "type": "photo",
+    "src": "/media/nyc_副本7.jpg"
+  },
+  {
+    "title": "Nyc",
+    "type": "photo",
+    "src": "/media/nyc.jpg"
   }
 ]

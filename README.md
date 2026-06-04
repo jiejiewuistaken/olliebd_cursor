@@ -51,6 +51,22 @@ npm run generate:media
 
 If `public/media` is empty, the screen falls back to the built-in procedural film cards.
 
+## Character movement controls
+
+The scene uses controlled waypoint movement so it keeps the cinematic composition
+without full free-roam physics.
+
+Use the buttons on the right side of the screen, or press:
+
+- `1` = Middle seat
+- `2` = Left aisle
+- `3` = Right aisle
+- `4` = Front row
+- `5` = Projector booth
+
+The camera smoothly moves between these curated viewpoints, and you can still drag
+to look around with OrbitControls.
+
 ## Troubleshooting
 
 If the page is blank with a stale Drei/Bloom export error, stop the dev server,
