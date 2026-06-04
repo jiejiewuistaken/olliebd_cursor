@@ -68,7 +68,7 @@ you can drag freely around the cinema with OrbitControls. Mystery points are ran
 each time the app loads. Row 2 Seat 2 and Row 5 Seat 7 are fixed clue seats;
 if a mystery point lands on one, selecting it opens an animated film clue card, and
 selecting it again hides the card. If `public/media` contains a `.gif`, the clue card
-uses that GIF first; otherwise it falls back to one of your photos.
+uses that GIF first; otherwise it falls back to one of your photos. Found clues are saved in the Cinema Ticket Album in the corner: collected stickers are colorful and clickable, while locked clues stay as dark silhouettes.
 
 ## Troubleshooting
 

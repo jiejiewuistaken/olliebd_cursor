@@ -305,3 +305,222 @@ select {
   }
 }
 
+
+.ticket-album {
+  position: fixed;
+  left: clamp(1rem, 3vw, 2rem);
+  top: clamp(1rem, 4vw, 2rem);
+  z-index: 5;
+  display: grid;
+  gap: 0.65rem;
+  width: min(20rem, calc(100vw - 2rem));
+  pointer-events: none;
+}
+
+.ticket-album__tab,
+.ticket-album__book {
+  pointer-events: auto;
+}
+
+.ticket-album__tab {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.62rem 0.86rem;
+  border: 1px solid rgba(255, 210, 142, 0.36);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(8, 7, 8, 0.82), rgba(44, 18, 6, 0.74));
+  box-shadow: 0 0.8rem 2rem rgba(0, 0, 0, 0.32);
+  color: #fff7e6;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+}
+
+.ticket-album__tab span {
+  color: #5efaff;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ticket-album__tab strong {
+  display: grid;
+  min-width: 2.2rem;
+  min-height: 1.45rem;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255, 179, 74, 0.18);
+  color: #ffdf8b;
+  font-size: 0.75rem;
+}
+
+.ticket-album__book {
+  padding: 1rem;
+  border: 1px solid rgba(255, 210, 142, 0.28);
+  border-radius: 1.1rem;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 48%, rgba(0, 0, 0, 0.16) 48% 52%, rgba(255, 255, 255, 0.04) 52% 100%),
+    linear-gradient(145deg, rgba(10, 8, 10, 0.88), rgba(47, 20, 9, 0.84));
+  box-shadow:
+    0 1.4rem 4rem rgba(0, 0, 0, 0.42),
+    inset 0 0 2.2rem rgba(255, 179, 74, 0.06);
+  backdrop-filter: blur(16px);
+  animation: album-open 220ms ease-out;
+}
+
+.ticket-album__header p,
+.ticket-album__header h2 {
+  margin: 0;
+}
+
+.ticket-album__header p {
+  color: #5efaff;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.ticket-album__header h2 {
+  margin-top: 0.18rem;
+  color: #fff7e6;
+  font-size: 1.1rem;
+  letter-spacing: -0.04em;
+}
+
+.ticket-album__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.72rem;
+  margin-top: 0.9rem;
+}
+
+.ticket-sticker {
+  display: grid;
+  min-height: 7.4rem;
+  place-items: center;
+  gap: 0.42rem;
+  padding: 0.72rem 0.55rem;
+  border: 1px dashed rgba(255, 210, 142, 0.28);
+  border-radius: 0.85rem;
+  background: rgba(6, 6, 8, 0.42);
+  color: rgba(255, 242, 213, 0.52);
+  cursor: default;
+}
+
+.ticket-sticker.collected {
+  border-style: solid;
+  border-color: rgba(94, 250, 255, 0.42);
+  background:
+    radial-gradient(circle at 28% 20%, rgba(94, 250, 255, 0.14), transparent 34%),
+    rgba(12, 10, 12, 0.68);
+  color: #fff7e6;
+  cursor: pointer;
+}
+
+.ticket-sticker.collected:hover {
+  transform: translateY(-0.08rem);
+  box-shadow: 0 0.8rem 1.8rem rgba(0, 0, 0, 0.24);
+}
+
+.ticket-sticker span:last-child {
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.clue-logo {
+  position: relative;
+  display: grid;
+  width: 3.25rem;
+  height: 3.25rem;
+  place-items: center;
+  border-radius: 1rem;
+  background: linear-gradient(145deg, #171115, #070708);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  filter: grayscale(1) brightness(0.52);
+  opacity: 0.74;
+}
+
+.clue-logo.collected {
+  filter: none;
+  opacity: 1;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+    0 0 1.6rem rgba(94, 250, 255, 0.16);
+}
+
+.clue-logo--cyan.collected {
+  background: linear-gradient(145deg, #123b4a, #1ce7ff);
+}
+
+.clue-logo--gold.collected {
+  background: linear-gradient(145deg, #5c2505, #ffb84d);
+}
+
+.clue-logo > span,
+.clue-logo::before,
+.clue-logo::after {
+  position: absolute;
+  content: "";
+}
+
+.clue-logo--moon::before {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: #fff7d8;
+  box-shadow: 0 0 1rem rgba(255, 247, 216, 0.48);
+}
+
+.clue-logo--moon::after {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: inherit;
+  transform: translateX(0.42rem);
+}
+
+.clue-logo--stamp::before {
+  width: 1.55rem;
+  height: 1.9rem;
+  border: 0.18rem solid #fff1c9;
+  border-radius: 0.2rem;
+  background: rgba(255, 255, 255, 0.12);
+  clip-path: polygon(0 0, 100% 0, 100% 82%, 78% 100%, 0 100%);
+}
+
+.clue-logo--stamp::after {
+  width: 0.78rem;
+  height: 0.78rem;
+  border-radius: 50%;
+  background: rgba(255, 241, 201, 0.86);
+  transform: translate(0.28rem, -0.28rem);
+}
+
+.mystery-card .clue-logo {
+  margin: 0.72rem auto 0;
+}
+
+.mystery-card__seat {
+  margin-top: 0.25rem !important;
+  color: rgba(255, 223, 139, 0.72) !important;
+  font-size: 0.72rem !important;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@keyframes album-open {
+  from {
+    opacity: 0;
+    transform: translateY(-0.35rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
