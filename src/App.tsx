@@ -460,6 +460,10 @@ function RollingMediaPanel({
   const accent = new THREE.Color(item.accent);
   const base = new THREE.Color(item.colorA);
   const dark = new THREE.Color(item.colorB);
+  const blendedAccent = useMemo(
+    () => new THREE.Color(item.colorB).lerp(new THREE.Color(item.accent), 0.3),
+    [item.accent, item.colorB],
+  );
 
   useFrame(({ clock }) => {
     if (!group.current) {
@@ -483,26 +487,38 @@ function RollingMediaPanel({
         <boxGeometry args={[2.0, 1.22, 0.06]} />
         <meshStandardMaterial color={dark} emissive={base} emissiveIntensity={0.22} roughness={0.2} />
       </mesh>
-      <mesh position={[0, 0.08, 0.05]}>
-        <planeGeometry args={[1.72, 0.92]} />
+      <FilmFrameTreatment
+        accent={item.accent}
+        base={item.colorA}
+        dark={item.colorB}
+        hasMedia={Boolean(mediaTexture)}
+      />
+      <mesh position={[0, 0.08, 0.07]}>
+        <planeGeometry args={[1.6, 0.82]} />
         <meshBasicMaterial
           color={mediaTexture ? '#ffffff' : base}
           map={mediaTexture ?? undefined}
           toneMapped={false}
         />
       </mesh>
-      {!mediaTexture && (
-        <>
-          <mesh position={[-0.4, -0.05, 0.06]} rotation={[0, 0, -0.26]}>
-            <planeGeometry args={[1.05, 0.78]} />
-            <meshBasicMaterial color={dark.lerp(accent, 0.3)} transparent opacity={0.9} />
-          </mesh>
-          <mesh position={[0.5, -0.16, 0.07]} rotation={[0, 0, 0.3]}>
-            <planeGeometry args={[0.9, 0.55]} />
-            <meshBasicMaterial color={accent} transparent opacity={0.58} />
-          </mesh>
-        </>
-      )}
+      <mesh position={[-0.34, -0.06, 0.09]} rotation={[0, 0, -0.26]}>
+        <planeGeometry args={[0.92, 0.62]} />
+        <meshBasicMaterial
+          color={blendedAccent}
+          transparent
+          opacity={mediaTexture ? 0.16 : 0.72}
+          depthWrite={false}
+        />
+      </mesh>
+      <mesh position={[0.5, -0.18, 0.1]} rotation={[0, 0, 0.3]}>
+        <planeGeometry args={[0.84, 0.48]} />
+        <meshBasicMaterial
+          color={accent}
+          transparent
+          opacity={mediaTexture ? 0.18 : 0.52}
+          depthWrite={false}
+        />
+      </mesh>
       {item.type === 'video' ? (
         <>
           <mesh position={[0, 0.09, 0.09]} rotation={[0, 0, -Math.PI / 2]}>
@@ -534,6 +550,67 @@ function RollingMediaPanel({
       >
         {item.type.toUpperCase()}
       </Text>
+    </group>
+  );
+}
+
+function FilmFrameTreatment({
+  accent,
+  base,
+  dark,
+  hasMedia,
+}: {
+  accent: string;
+  base: string;
+  dark: string;
+  hasMedia: boolean;
+}) {
+  const sprocketHoles = useMemo(() => [-0.36, -0.18, 0, 0.18, 0.36], []);
+  const glowOpacity = hasMedia ? 0.2 : 0.34;
+
+  return (
+    <group position={[0, 0.08, 0.08]}>
+      <mesh position={[0, 0.5, 0]}>
+        <planeGeometry args={[1.86, 0.1]} />
+        <meshBasicMaterial color={base} transparent opacity={0.86} />
+      </mesh>
+      <mesh position={[0, -0.5, 0]}>
+        <planeGeometry args={[1.86, 0.1]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.82} />
+      </mesh>
+      <mesh position={[-0.9, 0, 0]}>
+        <planeGeometry args={[0.12, 1.08]} />
+        <meshBasicMaterial color={dark} transparent opacity={0.94} />
+      </mesh>
+      <mesh position={[0.9, 0, 0]}>
+        <planeGeometry args={[0.12, 1.08]} />
+        <meshBasicMaterial color={dark} transparent opacity={0.94} />
+      </mesh>
+      {sprocketHoles.map((y) => (
+        <group key={y}>
+          <mesh position={[-0.9, y, 0.01]}>
+            <planeGeometry args={[0.058, 0.072]} />
+            <meshBasicMaterial color="#040407" transparent opacity={0.96} />
+          </mesh>
+          <mesh position={[0.9, y, 0.01]}>
+            <planeGeometry args={[0.058, 0.072]} />
+            <meshBasicMaterial color="#040407" transparent opacity={0.96} />
+          </mesh>
+        </group>
+      ))}
+      <mesh position={[-0.5, 0.34, 0.02]} rotation={[0, 0, -0.22]}>
+        <planeGeometry args={[0.78, 0.08]} />
+        <meshBasicMaterial
+          color="#ffffff"
+          transparent
+          opacity={hasMedia ? 0.16 : 0.22}
+          depthWrite={false}
+        />
+      </mesh>
+      <mesh position={[0.46, -0.36, 0.02]} rotation={[0, 0, -0.2]}>
+        <planeGeometry args={[0.88, 0.16]} />
+        <meshBasicMaterial color={accent} transparent opacity={glowOpacity} depthWrite={false} />
+      </mesh>
     </group>
   );
 }
