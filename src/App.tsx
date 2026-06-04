@@ -1,7 +1,7 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, Html, OrbitControls, Text } from '@react-three/drei';
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
-import { Suspense, useMemo, useRef } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 
 type MediaItem = {
@@ -10,9 +10,24 @@ type MediaItem = {
   colorA: string;
   colorB: string;
   accent: string;
+  src?: string;
 };
 
-const MEDIA_ITEMS: MediaItem[] = [
+type MediaManifestItem = {
+  title: string;
+  type: 'photo' | 'video';
+  src: string;
+};
+
+const MEDIA_PALETTES = [
+  { colorA: '#20d4ff', colorB: '#0a2b68', accent: '#fff0a8' },
+  { colorA: '#ffc148', colorB: '#f25b3f', accent: '#43f6ff' },
+  { colorA: '#1be7c9', colorB: '#12284f', accent: '#ffdf7e' },
+  { colorA: '#ff7abf', colorB: '#421354', accent: '#8df5ff' },
+  { colorA: '#5878ff', colorB: '#080b22', accent: '#ffb84d' },
+];
+
+const FALLBACK_MEDIA_ITEMS: MediaItem[] = [
   {
     title: 'Sky Ride',
     type: 'video',
@@ -51,6 +66,40 @@ const MEDIA_ITEMS: MediaItem[] = [
 ];
 
 const GIFT_SEATS = new Set(['0:-2', '1:1', '2:-1', '3:2']);
+
+function useMediaItems() {
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>(FALLBACK_MEDIA_ITEMS);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetch('/media-manifest.json', { cache: 'no-store' })
+      .then((response) => (response.ok ? response.json() : []))
+      .then((manifest: MediaManifestItem[]) => {
+        if (!isMounted || !Array.isArray(manifest) || manifest.length === 0) {
+          return;
+        }
+
+        setMediaItems(
+          manifest.map((item, index) => ({
+            ...item,
+            ...MEDIA_PALETTES[index % MEDIA_PALETTES.length],
+          })),
+        );
+      })
+      .catch(() => {
+        if (isMounted) {
+          setMediaItems(FALLBACK_MEDIA_ITEMS);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  return mediaItems;
+}
 
 function App() {
   return (
@@ -301,10 +350,17 @@ function ScreenGlow() {
 }
 
 function RollingMediaStrip() {
+  const mediaItems = useMediaItems();
+
   return (
     <group position={[0, 0, 0.16]}>
-      {MEDIA_ITEMS.map((item, index) => (
-        <RollingMediaPanel key={item.title} item={item} index={index} />
+      {mediaItems.map((item, index) => (
+        <RollingMediaPanel
+          key={item.src ?? item.title}
+          item={item}
+          index={index}
+          itemCount={mediaItems.length}
+        />
       ))}
       <mesh position={[-3.45, 0, 0.06]}>
         <boxGeometry args={[0.34, 2.86, 0.08]} />
@@ -318,8 +374,89 @@ function RollingMediaStrip() {
   );
 }
 
-function RollingMediaPanel({ item, index }: { item: MediaItem; index: number }) {
+function useMediaTexture(item: MediaItem) {
+  const [texture, setTexture] = useState<THREE.Texture | null>(null);
+
+  useEffect(() => {
+    if (!item.src) {
+      setTexture(null);
+      return;
+    }
+
+    let isDisposed = false;
+    setTexture(null);
+
+    if (item.type === 'video') {
+      const video = document.createElement('video');
+      video.src = item.src;
+      video.crossOrigin = 'anonymous';
+      video.loop = true;
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = 'auto';
+
+      const videoTexture = new THREE.VideoTexture(video);
+      videoTexture.colorSpace = THREE.SRGBColorSpace;
+      videoTexture.minFilter = THREE.LinearFilter;
+      videoTexture.magFilter = THREE.LinearFilter;
+
+      setTexture(videoTexture);
+      video.play().catch(() => undefined);
+
+      return () => {
+        isDisposed = true;
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+        videoTexture.dispose();
+      };
+    }
+
+    const loader = new THREE.TextureLoader();
+    let imageTexture: THREE.Texture | null = null;
+
+    loader.load(
+      item.src,
+      (loadedTexture) => {
+        if (isDisposed) {
+          loadedTexture.dispose();
+          return;
+        }
+
+        loadedTexture.colorSpace = THREE.SRGBColorSpace;
+        loadedTexture.minFilter = THREE.LinearFilter;
+        loadedTexture.magFilter = THREE.LinearFilter;
+        imageTexture = loadedTexture;
+        setTexture(loadedTexture);
+      },
+      undefined,
+      () => {
+        if (!isDisposed) {
+          setTexture(null);
+        }
+      },
+    );
+
+    return () => {
+      isDisposed = true;
+      imageTexture?.dispose();
+    };
+  }, [item.src, item.type]);
+
+  return texture;
+}
+
+function RollingMediaPanel({
+  item,
+  index,
+  itemCount,
+}: {
+  item: MediaItem;
+  index: number;
+  itemCount: number;
+}) {
   const group = useRef<THREE.Group>(null);
+  const mediaTexture = useMediaTexture(item);
   const accent = new THREE.Color(item.accent);
   const base = new THREE.Color(item.colorA);
   const dark = new THREE.Color(item.colorB);
@@ -330,7 +467,7 @@ function RollingMediaPanel({ item, index }: { item: MediaItem; index: number }) 
     }
 
     const spacing = 2.28;
-    const cycle = MEDIA_ITEMS.length * spacing;
+    const cycle = itemCount * spacing;
     const raw = index * spacing - clock.elapsedTime * 0.84 + cycle * 2;
     const x = ((raw % cycle) + cycle) % cycle - cycle / 2;
     const lift = Math.sin(clock.elapsedTime * 1.1 + index) * 0.035;
@@ -348,16 +485,24 @@ function RollingMediaPanel({ item, index }: { item: MediaItem; index: number }) 
       </mesh>
       <mesh position={[0, 0.08, 0.05]}>
         <planeGeometry args={[1.72, 0.92]} />
-        <meshBasicMaterial color={base} toneMapped={false} />
+        <meshBasicMaterial
+          color={mediaTexture ? '#ffffff' : base}
+          map={mediaTexture ?? undefined}
+          toneMapped={false}
+        />
       </mesh>
-      <mesh position={[-0.4, -0.05, 0.06]} rotation={[0, 0, -0.26]}>
-        <planeGeometry args={[1.05, 0.78]} />
-        <meshBasicMaterial color={dark.lerp(accent, 0.3)} transparent opacity={0.9} />
-      </mesh>
-      <mesh position={[0.5, -0.16, 0.07]} rotation={[0, 0, 0.3]}>
-        <planeGeometry args={[0.9, 0.55]} />
-        <meshBasicMaterial color={accent} transparent opacity={0.58} />
-      </mesh>
+      {!mediaTexture && (
+        <>
+          <mesh position={[-0.4, -0.05, 0.06]} rotation={[0, 0, -0.26]}>
+            <planeGeometry args={[1.05, 0.78]} />
+            <meshBasicMaterial color={dark.lerp(accent, 0.3)} transparent opacity={0.9} />
+          </mesh>
+          <mesh position={[0.5, -0.16, 0.07]} rotation={[0, 0, 0.3]}>
+            <planeGeometry args={[0.9, 0.55]} />
+            <meshBasicMaterial color={accent} transparent opacity={0.58} />
+          </mesh>
+        </>
+      )}
       {item.type === 'video' ? (
         <>
           <mesh position={[0, 0.09, 0.09]} rotation={[0, 0, -Math.PI / 2]}>

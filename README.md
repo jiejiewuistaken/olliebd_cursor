@@ -22,6 +22,35 @@ Controls:
 - Scroll to zoom in and out.
 - Look across the seats to find the glowing gift hints.
 
+## Use your own photos and videos
+
+Put your files in:
+
+```txt
+public/media/
+```
+
+Example:
+
+```txt
+public/media/birthday-photo.jpg
+public/media/travel-clip.mp4
+public/media/family/picnic.webp
+```
+
+Supported image formats: `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, `.avif`.
+Supported video formats: `.mp4`, `.webm`, `.mov`, `.m4v`, `.ogg`, `.ogv`.
+
+The app scans this folder and writes `public/media-manifest.json` automatically before
+`npm run dev` and `npm run build`. If you add files while the dev server is already
+running, run this and refresh the browser:
+
+```bash
+npm run generate:media
+```
+
+If `public/media` is empty, the screen falls back to the built-in procedural film cards.
+
 ## Troubleshooting
 
 If the page is blank with a stale Drei/Bloom export error, stop the dev server,

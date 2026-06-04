@@ -7,7 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "vite --host 0.0.0.0 --port 5174 --strictPort --force",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview --host 0.0.0.0"
+    "preview": "vite preview --host 0.0.0.0",
+    "generate:media": "node scripts/generate-media-manifest.mjs",
+    "predev": "npm run generate:media",
+    "prebuild": "npm run generate:media"
   },
   "repository": {
     "type": "git",
