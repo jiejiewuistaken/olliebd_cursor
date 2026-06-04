@@ -1,7 +1,7 @@
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Float, Html, OrbitControls, Text } from '@react-three/drei';
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import * as THREE from 'three';
 
 type MediaItem = {
@@ -66,8 +66,54 @@ const FALLBACK_MEDIA_ITEMS: MediaItem[] = [
 ];
 
 const GIFT_SEATS = new Set(['0:-2', '1:1', '2:-1', '3:2']);
-const SEATED_CAMERA_POSITION: [number, number, number] = [0, 1.38, 1.72];
-const SEATED_CAMERA_TARGET: [number, number, number] = [0, 2.18, -7.35];
+
+type Viewpoint = {
+  id: string;
+  key: string;
+  label: string;
+  position: [number, number, number];
+  target: [number, number, number];
+};
+
+const VIEWPOINTS: Viewpoint[] = [
+  {
+    id: 'middle-seat',
+    key: '1',
+    label: 'Middle seat',
+    position: [0, 1.38, 1.72],
+    target: [0, 2.18, -7.35],
+  },
+  {
+    id: 'left-aisle',
+    key: '2',
+    label: 'Left aisle',
+    position: [-5.3, 1.55, 0.55],
+    target: [-0.8, 2.25, -7.35],
+  },
+  {
+    id: 'right-aisle',
+    key: '3',
+    label: 'Right aisle',
+    position: [5.3, 1.55, 0.55],
+    target: [0.8, 2.25, -7.35],
+  },
+  {
+    id: 'front-row',
+    key: '4',
+    label: 'Front row',
+    position: [0, 1.18, -1.28],
+    target: [0, 2.36, -7.45],
+  },
+  {
+    id: 'projector-booth',
+    key: '5',
+    label: 'Projector booth',
+    position: [0, 3.6, 4.95],
+    target: [0, 2.2, -7.35],
+  },
+];
+
+const INITIAL_VIEWPOINT = VIEWPOINTS[0];
 
 function useMediaItems() {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>(FALLBACK_MEDIA_ITEMS);
@@ -104,17 +150,37 @@ function useMediaItems() {
 }
 
 function App() {
+  const [activeViewpointId, setActiveViewpointId] = useState(INITIAL_VIEWPOINT.id);
+  const activeViewpoint =
+    VIEWPOINTS.find((viewpoint) => viewpoint.id === activeViewpointId) ?? INITIAL_VIEWPOINT;
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const matchingViewpoint = VIEWPOINTS.find((viewpoint) => viewpoint.key === event.key);
+
+      if (matchingViewpoint) {
+        setActiveViewpointId(matchingViewpoint.id);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   return (
     <main className="app-shell">
       <Canvas
         shadows
-        camera={{ position: SEATED_CAMERA_POSITION, fov: 58 }}
+        camera={{ position: INITIAL_VIEWPOINT.position, fov: 58 }}
         gl={{ antialias: true }}
       >
         <color attach="background" args={['#030405']} />
         <fog attach="fog" args={['#050506', 8, 24]} />
         <Suspense fallback={null}>
-          <CinemaScene />
+          <CinemaScene activeViewpoint={activeViewpoint} />
           <EffectComposer>
             <Bloom
               intensity={0.65}
@@ -128,15 +194,31 @@ function App() {
 
       <section className="hud">
         <p className="eyebrow">React Three Fiber cinema</p>
-        <h1>You are seated in the middle row. Drag to look around the cinema.</h1>
-        <p>Scroll to zoom, then look across the chairs to find the glowing gift hints.</p>
+        <h1>{activeViewpoint.label}: drag to look around the cinema.</h1>
+        <p>Press 1-5 or use the buttons to move between curated viewpoints.</p>
+      </section>
+
+      <section className="viewpoint-dock" aria-label="Cinema viewpoints">
+        {VIEWPOINTS.map((viewpoint) => (
+          <button
+            key={viewpoint.id}
+            className={viewpoint.id === activeViewpoint.id ? 'active' : undefined}
+            type="button"
+            onClick={() => setActiveViewpointId(viewpoint.id)}
+          >
+            <span>{viewpoint.key}</span>
+            {viewpoint.label}
+          </button>
+        ))}
       </section>
       <div className="vignette" />
     </main>
   );
 }
 
-function CinemaScene() {
+function CinemaScene({ activeViewpoint }: { activeViewpoint: Viewpoint }) {
+  const controls = useRef<any>(null);
+
   return (
     <>
       <ambientLight intensity={0.08} />
@@ -144,16 +226,48 @@ function CinemaScene() {
       <CinemaRoom />
       <FloatingScreen />
       <SeatRows />
+      <WaypointCameraController activeViewpoint={activeViewpoint} controlsRef={controls} />
       <OrbitControls
+        ref={controls}
         enableDamping
         dampingFactor={0.06}
         minDistance={1.2}
         maxDistance={11}
         maxPolarAngle={Math.PI * 0.58}
-        target={SEATED_CAMERA_TARGET}
+        target={INITIAL_VIEWPOINT.target}
       />
     </>
   );
+}
+
+function WaypointCameraController({
+  activeViewpoint,
+  controlsRef,
+}: {
+  activeViewpoint: Viewpoint;
+  controlsRef: MutableRefObject<any>;
+}) {
+  const { camera } = useThree();
+  const targetPosition = useMemo(
+    () => new THREE.Vector3(...activeViewpoint.position),
+    [activeViewpoint.position],
+  );
+  const targetLookAt = useMemo(
+    () => new THREE.Vector3(...activeViewpoint.target),
+    [activeViewpoint.target],
+  );
+
+  useFrame((_, delta) => {
+    const smoothing = 1 - Math.exp(-delta * 2.8);
+    camera.position.lerp(targetPosition, smoothing);
+
+    if (controlsRef.current) {
+      controlsRef.current.target.lerp(targetLookAt, smoothing);
+      controlsRef.current.update();
+    }
+  });
+
+  return null;
 }
 
 function ProjectorLightRig() {

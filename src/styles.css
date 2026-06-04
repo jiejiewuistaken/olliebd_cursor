@@ -112,3 +112,67 @@ select {
   white-space: nowrap;
   user-select: none;
 }
+
+.viewpoint-dock {
+  position: fixed;
+  right: clamp(1rem, 3vw, 2rem);
+  bottom: clamp(1rem, 4vw, 2.5rem);
+  z-index: 3;
+  display: grid;
+  gap: 0.5rem;
+  width: min(15rem, calc(100vw - 2rem));
+}
+
+.viewpoint-dock button {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.62rem 0.72rem;
+  border: 1px solid rgba(255, 210, 142, 0.22);
+  border-radius: 999px;
+  background: rgba(8, 7, 8, 0.68);
+  box-shadow: 0 0.75rem 1.8rem rgba(0, 0, 0, 0.28);
+  color: rgba(255, 242, 213, 0.78);
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.viewpoint-dock button:hover,
+.viewpoint-dock button.active {
+  border-color: rgba(94, 250, 255, 0.62);
+  background: rgba(16, 25, 30, 0.78);
+  color: #fff7e6;
+  transform: translateX(-0.12rem);
+}
+
+.viewpoint-dock span {
+  display: grid;
+  width: 1.45rem;
+  height: 1.45rem;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 179, 74, 0.22);
+  color: #5efaff;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+@media (max-width: 720px) {
+  .viewpoint-dock {
+    right: 1rem;
+    bottom: auto;
+    top: 1rem;
+    width: min(13rem, calc(100vw - 2rem));
+  }
+
+  .viewpoint-dock button {
+    padding: 0.48rem 0.56rem;
+    font-size: 0.82rem;
+  }
+}
