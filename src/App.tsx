@@ -305,6 +305,7 @@ function WaypointCameraController({
   controlsRef: MutableRefObject<any>;
 }) {
   const { camera } = useThree();
+  const isTransitioning = useRef(false);
   const targetPosition = useMemo(
     () => new THREE.Vector3(...activeViewpoint.position),
     [activeViewpoint.position],
@@ -314,13 +315,34 @@ function WaypointCameraController({
     [activeViewpoint.target],
   );
 
+  useEffect(() => {
+    isTransitioning.current = true;
+  }, [activeViewpoint.id]);
+
   useFrame((_, delta) => {
-    const smoothing = 1 - Math.exp(-delta * 2.8);
+    if (!isTransitioning.current) {
+      return;
+    }
+
+    const smoothing = 1 - Math.exp(-delta * 3.4);
     camera.position.lerp(targetPosition, smoothing);
 
     if (controlsRef.current) {
       controlsRef.current.target.lerp(targetLookAt, smoothing);
       controlsRef.current.update();
+    }
+
+    const targetDistance = controlsRef.current
+      ? controlsRef.current.target.distanceTo(targetLookAt)
+      : 0;
+
+    if (camera.position.distanceTo(targetPosition) < 0.035 && targetDistance < 0.035) {
+      camera.position.copy(targetPosition);
+      if (controlsRef.current) {
+        controlsRef.current.target.copy(targetLookAt);
+        controlsRef.current.update();
+      }
+      isTransitioning.current = false;
     }
   });
 

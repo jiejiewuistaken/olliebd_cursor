@@ -63,8 +63,8 @@ Use the buttons on the right side of the screen, or press:
 - `3` = Mystery point 1 (random seat)
 - `4` = Mystery point 2 (random seat)
 
-The camera smoothly moves between these curated viewpoints, and you can still drag
-to look around with OrbitControls. Mystery points are randomly selected seat views
+The camera smoothly moves to a selected viewpoint once, then releases control so
+you can drag freely around the cinema with OrbitControls. Mystery points are randomly selected seat views
 each time the app loads. Row 2 Seat 2 and Row 5 Seat 7 are fixed clue seats;
 if a mystery point lands on one, selecting it opens a photo cloud, and selecting it
 again hides the cloud.
