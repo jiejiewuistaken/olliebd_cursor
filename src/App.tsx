@@ -87,12 +87,12 @@ type Viewpoint = {
 
 const SCREEN_TARGET: [number, number, number] = [0, 2.55, -7.45];
 const INITIAL_VIEWPOINT: Viewpoint = {
-  id: 'middle-seat',
+  id: 'back-row',
   key: '1',
-  label: 'Middle seat',
-  // Put the eye point just in front of the middle chair back so the screen is visible immediately.
-  position: [0, 1.62, -0.9],
-  target: SCREEN_TARGET,
+  label: 'Back row',
+  // Start behind the seats so the room immediately reads as a cinema.
+  position: [0, 2.05, 4.15],
+  target: [0, 1.95, -4.8],
 };
 
 const FIXED_VIEWPOINTS: Viewpoint[] = [
@@ -236,7 +236,7 @@ function App() {
       <section className="hud">
         <p className="eyebrow">React Three Fiber cinema</p>
         <h1>{activeViewpoint.label}: drag to look around the cinema.</h1>
-        <p>Press 1-4 or use the buttons to move between curated viewpoints.</p>
+        <p>Press 1-4 or use the buttons to move between cinema viewpoints.</p>
       </section>
 
       <section className="viewpoint-dock" aria-label="Cinema viewpoints">

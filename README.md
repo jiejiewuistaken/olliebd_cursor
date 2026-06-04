@@ -56,9 +56,9 @@ If `public/media` is empty, the screen falls back to the built-in procedural fil
 The scene uses controlled waypoint movement so it keeps the cinematic composition
 without full free-roam physics.
 
-Use the buttons on the right side of the screen, or press:
+Use the buttons on the right side of the screen, or press the keys below. The default entry point is the back row so you can see the seats and screen together:
 
-- `1` = Middle seat
+- `1` = Back row
 - `2` = Left aisle
 - `3` = Mystery point 1 (random seat)
 - `4` = Mystery point 2 (random seat)
