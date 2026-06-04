@@ -170,8 +170,9 @@ function App() {
   const [visibleCloudSeatId, setVisibleCloudSeatId] = useState<string | null>(null);
   const activeViewpoint =
     viewpoints.find((viewpoint) => viewpoint.id === activeViewpointId) ?? INITIAL_VIEWPOINT;
-  const cloudImageSrc = useMemo(
+  const clueImageSrc = useMemo(
     () =>
+      mediaItems.find((item) => item.src?.toLowerCase().endsWith('.gif'))?.src ??
       mediaItems.find((item) => item.src && item.type === 'photo')?.src ??
       mediaItems.find((item) => item.src)?.src,
     [mediaItems],
@@ -253,22 +254,28 @@ function App() {
       </section>
 
       {activeCloudSeatId && (
-        <MysteryCloud seatId={activeCloudSeatId} imageSrc={cloudImageSrc} />
+        <MysteryClueCard seatId={activeCloudSeatId} imageSrc={clueImageSrc} />
       )}
       <div className="vignette" />
     </main>
   );
 }
 
-function MysteryCloud({ seatId, imageSrc }: { seatId: string; imageSrc?: string }) {
+function MysteryClueCard({ seatId, imageSrc }: { seatId: string; imageSrc?: string }) {
+  const [row, seat] = seatId.split(':');
+
   return (
-    <section className="mystery-cloud" aria-live="polite">
-      <p className="mystery-cloud__eyebrow">Gift clue found</p>
-      <h2>Row {seatId.split(':')[0]} Seat {seatId.split(':')[1]}</h2>
-      <div className="mystery-cloud__image">
-        {imageSrc ? <img src={encodeURI(imageSrc)} alt="Mystery clue" /> : <span>?</span>}
+    <section className="mystery-card" aria-live="polite">
+      <div className="mystery-card__sprockets" aria-hidden="true" />
+      <div className="mystery-card__content">
+        <p className="mystery-card__eyebrow">Found frame</p>
+        <h2>Row {row} Seat {seat}</h2>
+        <div className="mystery-card__image">
+          {imageSrc ? <img src={encodeURI(imageSrc)} alt="Mystery clue" /> : <span>?</span>}
+        </div>
+        <p>Hit the same mystery point again to hide this card.</p>
       </div>
-      <p>Hit the same mystery point again to hide this cloud.</p>
+      <div className="mystery-card__sprockets" aria-hidden="true" />
     </section>
   );
 }
@@ -305,6 +312,7 @@ function WaypointCameraController({
   controlsRef: MutableRefObject<any>;
 }) {
   const { camera } = useThree();
+  const isTransitioning = useRef(false);
   const targetPosition = useMemo(
     () => new THREE.Vector3(...activeViewpoint.position),
     [activeViewpoint.position],
@@ -314,13 +322,34 @@ function WaypointCameraController({
     [activeViewpoint.target],
   );
 
+  useEffect(() => {
+    isTransitioning.current = true;
+  }, [activeViewpoint.id]);
+
   useFrame((_, delta) => {
-    const smoothing = 1 - Math.exp(-delta * 2.8);
+    if (!isTransitioning.current) {
+      return;
+    }
+
+    const smoothing = 1 - Math.exp(-delta * 3.4);
     camera.position.lerp(targetPosition, smoothing);
 
     if (controlsRef.current) {
       controlsRef.current.target.lerp(targetLookAt, smoothing);
       controlsRef.current.update();
+    }
+
+    const targetDistance = controlsRef.current
+      ? controlsRef.current.target.distanceTo(targetLookAt)
+      : 0;
+
+    if (camera.position.distanceTo(targetPosition) < 0.035 && targetDistance < 0.035) {
+      camera.position.copy(targetPosition);
+      if (controlsRef.current) {
+        controlsRef.current.target.copy(targetLookAt);
+        controlsRef.current.update();
+      }
+      isTransitioning.current = false;
     }
   });
 
