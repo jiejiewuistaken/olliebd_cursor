@@ -38,7 +38,7 @@ public/media/travel-clip.mp4
 public/media/family/picnic.webp
 ```
 
-Supported image formats: `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, `.avif`.
+Supported image formats: `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, `.avif`. GIF files animate inside clue cards in the browser overlay.
 Supported video formats: `.mp4`, `.webm`, `.mov`, `.m4v`, `.ogg`, `.ogv`.
 
 The app scans this folder and writes `public/media-manifest.json` automatically before
@@ -66,8 +66,9 @@ Use the buttons on the right side of the screen, or press:
 The camera smoothly moves to a selected viewpoint once, then releases control so
 you can drag freely around the cinema with OrbitControls. Mystery points are randomly selected seat views
 each time the app loads. Row 2 Seat 2 and Row 5 Seat 7 are fixed clue seats;
-if a mystery point lands on one, selecting it opens a photo cloud, and selecting it
-again hides the cloud.
+if a mystery point lands on one, selecting it opens an animated film clue card, and
+selecting it again hides the card. If `public/media` contains a `.gif`, the clue card
+uses that GIF first; otherwise it falls back to one of your photos.
 
 ## Troubleshooting
 
