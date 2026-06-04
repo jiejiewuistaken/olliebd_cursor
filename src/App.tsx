@@ -1,5 +1,6 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, Html, OrbitControls, Text } from '@react-three/drei';
+import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import { Suspense, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 
@@ -63,6 +64,14 @@ function App() {
         <fog attach="fog" args={['#050506', 8, 24]} />
         <Suspense fallback={null}>
           <CinemaScene />
+          <EffectComposer>
+            <Bloom
+              intensity={0.65}
+              luminanceThreshold={0.16}
+              luminanceSmoothing={0.42}
+              mipmapBlur
+            />
+          </EffectComposer>
         </Suspense>
       </Canvas>
 
