@@ -280,8 +280,8 @@ function App() {
         camera={{ position: INITIAL_VIEWPOINT.position, fov: 58 }}
         gl={{ antialias: true }}
       >
-        <color attach="background" args={['#030405']} />
-        <fog attach="fog" args={['#050506', 8, 24]} />
+        <color attach="background" args={['#07101b']} />
+        <fog attach="fog" args={['#07101b', 10, 28]} />
         <Suspense fallback={null}>
           <CinemaScene activeViewpoint={activeViewpoint} />
           <EffectComposer>
@@ -609,27 +609,88 @@ function ProjectorBeams() {
 function CinemaRoom() {
   return (
     <group>
+      <OpenAirSky />
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} receiveShadow>
-        <planeGeometry args={[16, 22]} />
-        <meshStandardMaterial color="#080807" roughness={0.82} metalness={0.08} />
+        <planeGeometry args={[18, 24]} />
+        <meshStandardMaterial color="#090b0a" roughness={0.86} metalness={0.04} />
       </mesh>
-      <mesh position={[0, 4.9, 0]} receiveShadow>
-        <boxGeometry args={[16, 0.18, 22]} />
-        <meshStandardMaterial color="#080706" roughness={0.9} />
+      <mesh position={[0, 1.45, -8.85]} receiveShadow>
+        <boxGeometry args={[17, 2.9, 0.22]} />
+        <meshStandardMaterial color="#08080a" roughness={0.88} />
       </mesh>
-      <mesh position={[-8, 2.4, 0]} receiveShadow>
-        <boxGeometry args={[0.2, 4.9, 22]} />
-        <meshStandardMaterial color="#050506" roughness={0.94} />
+      <mesh position={[0, 0.32, 3.9]} receiveShadow>
+        <boxGeometry args={[12, 0.64, 0.18]} />
+        <meshStandardMaterial color="#120b07" roughness={0.84} />
       </mesh>
-      <mesh position={[8, 2.4, 0]} receiveShadow>
-        <boxGeometry args={[0.2, 4.9, 22]} />
-        <meshStandardMaterial color="#0a0504" roughness={0.94} />
-      </mesh>
-      <mesh position={[0, 2.4, -8.7]} receiveShadow>
-        <boxGeometry args={[16, 4.9, 0.22]} />
-        <meshStandardMaterial color="#050405" roughness={0.88} />
-      </mesh>
+      <FestivalStringLights />
+      <PalmSilhouettes />
       <AisleLights />
+    </group>
+  );
+}
+
+function OpenAirSky() {
+  return (
+    <group>
+      <mesh position={[0, 7.5, -7]} rotation={[0, 0, 0]}>
+        <sphereGeometry args={[18, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshBasicMaterial color="#07101b" side={THREE.BackSide} />
+      </mesh>
+      <mesh position={[-5.6, 5.5, -9.8]}>
+        <circleGeometry args={[0.42, 32]} />
+        <meshBasicMaterial color="#fff1c8" transparent opacity={0.82} />
+      </mesh>
+    </group>
+  );
+}
+
+function FestivalStringLights() {
+  const bulbs = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, index) => ({
+        x: -6.6 + index * 1.2,
+        y: 3.95 + Math.sin(index * 0.8) * 0.18,
+        z: 1.6 - index * 0.36,
+      })),
+    [],
+  );
+
+  return (
+    <group>
+      {bulbs.map((bulb, index) => (
+        <group key={index} position={[bulb.x, bulb.y, bulb.z]}>
+          <pointLight color={index % 2 ? '#ffd082' : '#8df5ff'} intensity={2.4} distance={2.6} />
+          <mesh>
+            <sphereGeometry args={[0.055, 12, 8]} />
+            <meshStandardMaterial
+              color={index % 2 ? '#ffd082' : '#8df5ff'}
+              emissive={index % 2 ? '#ffd082' : '#8df5ff'}
+              emissiveIntensity={1.4}
+            />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function PalmSilhouettes() {
+  return (
+    <group>
+      {[-1, 1].map((side) => (
+        <group key={side} position={[side * 7.1, 0.35, -7.2]} rotation={[0, side * -0.22, 0]}>
+          <mesh position={[0, 1.1, 0]} rotation={[0, 0, side * 0.08]}>
+            <cylinderGeometry args={[0.08, 0.14, 2.2, 8]} />
+            <meshStandardMaterial color="#030405" roughness={0.9} />
+          </mesh>
+          {[-0.8, -0.4, 0, 0.4, 0.8].map((angle) => (
+            <mesh key={angle} position={[0, 2.25, 0]} rotation={[0.35, angle, side * 0.5]}>
+              <coneGeometry args={[0.18, 1.45, 4]} />
+              <meshStandardMaterial color="#030405" roughness={0.9} />
+            </mesh>
+          ))}
+        </group>
+      ))}
     </group>
   );
 }
