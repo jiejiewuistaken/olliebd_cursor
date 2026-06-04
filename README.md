@@ -60,12 +60,12 @@ Use the buttons on the right side of the screen, or press:
 
 - `1` = Middle seat
 - `2` = Left aisle
-- `3` = Right aisle
-- `4` = Front row
-- `5` = Projector booth
+- `3` = Mystery point 1 (random seat)
+- `4` = Mystery point 2 (random seat)
 
 The camera smoothly moves between these curated viewpoints, and you can still drag
-to look around with OrbitControls.
+to look around with OrbitControls. Mystery points are randomly selected seat views
+each time the app loads.
 
 ## Troubleshooting
 

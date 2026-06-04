@@ -75,45 +75,49 @@ type Viewpoint = {
   target: [number, number, number];
 };
 
-const VIEWPOINTS: Viewpoint[] = [
-  {
-    id: 'middle-seat',
-    key: '1',
-    label: 'Middle seat',
-    position: [0, 1.38, 1.72],
-    target: [0, 2.18, -7.35],
-  },
+const SCREEN_TARGET: [number, number, number] = [0, 2.55, -7.45];
+const INITIAL_VIEWPOINT: Viewpoint = {
+  id: 'middle-seat',
+  key: '1',
+  label: 'Middle seat',
+  // Put the eye point just in front of the middle chair back so the screen is visible immediately.
+  position: [0, 1.62, -0.9],
+  target: SCREEN_TARGET,
+};
+
+const FIXED_VIEWPOINTS: Viewpoint[] = [
+  INITIAL_VIEWPOINT,
   {
     id: 'left-aisle',
     key: '2',
     label: 'Left aisle',
-    position: [-5.3, 1.55, 0.55],
-    target: [-0.8, 2.25, -7.35],
-  },
-  {
-    id: 'right-aisle',
-    key: '3',
-    label: 'Right aisle',
-    position: [5.3, 1.55, 0.55],
-    target: [0.8, 2.25, -7.35],
-  },
-  {
-    id: 'front-row',
-    key: '4',
-    label: 'Front row',
-    position: [0, 1.18, -1.28],
-    target: [0, 2.36, -7.45],
-  },
-  {
-    id: 'projector-booth',
-    key: '5',
-    label: 'Projector booth',
-    position: [0, 3.6, 4.95],
-    target: [0, 2.2, -7.35],
+    position: [-5.35, 1.58, -0.65],
+    target: [-0.7, 2.42, -7.4],
   },
 ];
 
-const INITIAL_VIEWPOINT = VIEWPOINTS[0];
+const MYSTERY_SEAT_CANDIDATES: Array<Pick<Viewpoint, 'position' | 'target'>> = [
+  { position: [-2.5, 1.48, -2.16], target: [-0.4, 2.46, -7.45] },
+  { position: [2.5, 1.48, -2.16], target: [0.4, 2.46, -7.45] },
+  { position: [-1.25, 1.6, -0.78], target: [-0.25, 2.5, -7.45] },
+  { position: [1.25, 1.6, -0.78], target: [0.25, 2.5, -7.45] },
+  { position: [-3.75, 1.72, 0.56], target: [-0.7, 2.5, -7.35] },
+  { position: [3.75, 1.72, 0.56], target: [0.7, 2.5, -7.35] },
+  { position: [-1.25, 1.82, 1.9], target: [-0.3, 2.42, -7.35] },
+  { position: [1.25, 1.82, 1.9], target: [0.3, 2.42, -7.35] },
+];
+
+function createViewpoints() {
+  const shuffledSeats = [...MYSTERY_SEAT_CANDIDATES].sort(() => Math.random() - 0.5);
+  const mysteryViewpoints = shuffledSeats.slice(0, 2).map((seat, index) => ({
+    id: `mystery-point-${index + 1}`,
+    key: String(index + 3),
+    label: `Mystery point ${index + 1}`,
+    ...seat,
+  }));
+
+  return [...FIXED_VIEWPOINTS, ...mysteryViewpoints];
+}
 
 function useMediaItems() {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>(FALLBACK_MEDIA_ITEMS);
@@ -150,13 +154,14 @@ function useMediaItems() {
 }
 
 function App() {
+  const viewpoints = useMemo(() => createViewpoints(), []);
   const [activeViewpointId, setActiveViewpointId] = useState(INITIAL_VIEWPOINT.id);
   const activeViewpoint =
-    VIEWPOINTS.find((viewpoint) => viewpoint.id === activeViewpointId) ?? INITIAL_VIEWPOINT;
+    viewpoints.find((viewpoint) => viewpoint.id === activeViewpointId) ?? INITIAL_VIEWPOINT;
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      const matchingViewpoint = VIEWPOINTS.find((viewpoint) => viewpoint.key === event.key);
+      const matchingViewpoint = viewpoints.find((viewpoint) => viewpoint.key === event.key);
 
       if (matchingViewpoint) {
         setActiveViewpointId(matchingViewpoint.id);
@@ -168,7 +173,7 @@ function App() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [viewpoints]);
 
   return (
     <main className="app-shell">
@@ -195,11 +200,11 @@ function App() {
       <section className="hud">
         <p className="eyebrow">React Three Fiber cinema</p>
         <h1>{activeViewpoint.label}: drag to look around the cinema.</h1>
-        <p>Press 1-5 or use the buttons to move between curated viewpoints.</p>
+        <p>Press 1-4 or use the buttons to move between curated viewpoints.</p>
       </section>
 
       <section className="viewpoint-dock" aria-label="Cinema viewpoints">
-        {VIEWPOINTS.map((viewpoint) => (
+        {viewpoints.map((viewpoint) => (
           <button
             key={viewpoint.id}
             className={viewpoint.id === activeViewpoint.id ? 'active' : undefined}
