@@ -176,3 +176,111 @@ select {
     font-size: 0.82rem;
   }
 }
+
+.mystery-cloud {
+  position: fixed;
+  left: 50%;
+  top: clamp(1rem, 8vh, 4rem);
+  z-index: 4;
+  width: min(20rem, calc(100vw - 2rem));
+  padding: 1.1rem;
+  border: 1px solid rgba(255, 244, 218, 0.64);
+  border-radius: 42% 48% 44% 50% / 48% 42% 52% 44%;
+  background:
+    radial-gradient(circle at 22% 18%, rgba(255, 255, 255, 0.92), transparent 21%),
+    radial-gradient(circle at 78% 16%, rgba(255, 244, 218, 0.82), transparent 22%),
+    linear-gradient(145deg, rgba(255, 250, 238, 0.92), rgba(255, 211, 145, 0.72));
+  box-shadow:
+    0 1.4rem 4rem rgba(0, 0, 0, 0.38),
+    0 0 3rem rgba(255, 190, 88, 0.26);
+  color: #281304;
+  text-align: center;
+  transform: translateX(-50%);
+  animation: cloud-pop 260ms ease-out;
+}
+
+.mystery-cloud::before,
+.mystery-cloud::after {
+  position: absolute;
+  content: "";
+  border-radius: 50%;
+  background: rgba(255, 247, 226, 0.86);
+  box-shadow: 0 0.8rem 1.6rem rgba(0, 0, 0, 0.18);
+}
+
+.mystery-cloud::before {
+  right: 2rem;
+  bottom: -1rem;
+  width: 2.6rem;
+  height: 2.6rem;
+}
+
+.mystery-cloud::after {
+  right: 0.9rem;
+  bottom: -2rem;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.mystery-cloud h2,
+.mystery-cloud p {
+  margin: 0;
+}
+
+.mystery-cloud h2 {
+  margin-top: 0.2rem;
+  color: #281304;
+  font-size: 1.28rem;
+  letter-spacing: -0.03em;
+}
+
+.mystery-cloud p:not(.mystery-cloud__eyebrow) {
+  margin-top: 0.55rem;
+  color: rgba(40, 19, 4, 0.72);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.mystery-cloud__eyebrow {
+  color: #a25a00;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.mystery-cloud__image {
+  display: grid;
+  width: 7.5rem;
+  height: 5.2rem;
+  margin: 0.8rem auto 0;
+  place-items: center;
+  overflow: hidden;
+  border: 0.22rem solid rgba(255, 255, 255, 0.88);
+  border-radius: 1.1rem;
+  background: linear-gradient(135deg, #36e9ff, #ffba55);
+  box-shadow: 0 0.7rem 1.5rem rgba(73, 34, 0, 0.22);
+}
+
+.mystery-cloud__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mystery-cloud__image span {
+  color: #ffffff;
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+@keyframes cloud-pop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -0.5rem) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}

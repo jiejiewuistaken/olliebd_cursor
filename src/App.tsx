@@ -65,7 +65,16 @@ const FALLBACK_MEDIA_ITEMS: MediaItem[] = [
   },
 ];
 
-const GIFT_SEATS = new Set(['0:-2', '1:1', '2:-1', '3:2']);
+const SPECIAL_SEATS = new Set(['2:2', '5:7']);
+const GIFT_SEATS = SPECIAL_SEATS;
+const SEAT_COLUMNS = [-3, -2, -1, 0, 1, 2, 3];
+
+function seatPosition(rowNumber: number, seatNumber: number): [number, number, number] {
+  const rowIndex = rowNumber - 1;
+  const column = SEAT_COLUMNS[seatNumber - 1] ?? 0;
+
+  return [column * 1.25, 1.52 + rowIndex * 0.08, -1.94 + rowIndex * 1.35];
+}
 
 type Viewpoint = {
   id: string;
@@ -73,47 +82,52 @@ type Viewpoint = {
   label: string;
   position: [number, number, number];
   target: [number, number, number];
+  specialSeatId?: string;
 };
 
-const VIEWPOINTS: Viewpoint[] = [
-  {
-    id: 'middle-seat',
-    key: '1',
-    label: 'Middle seat',
-    position: [0, 1.38, 1.72],
-    target: [0, 2.18, -7.35],
-  },
+const SCREEN_TARGET: [number, number, number] = [0, 2.55, -7.45];
+const INITIAL_VIEWPOINT: Viewpoint = {
+  id: 'middle-seat',
+  key: '1',
+  label: 'Middle seat',
+  // Put the eye point just in front of the middle chair back so the screen is visible immediately.
+  position: [0, 1.62, -0.9],
+  target: SCREEN_TARGET,
+};
+
+const FIXED_VIEWPOINTS: Viewpoint[] = [
+  INITIAL_VIEWPOINT,
   {
     id: 'left-aisle',
     key: '2',
     label: 'Left aisle',
-    position: [-5.3, 1.55, 0.55],
-    target: [-0.8, 2.25, -7.35],
-  },
-  {
-    id: 'right-aisle',
-    key: '3',
-    label: 'Right aisle',
-    position: [5.3, 1.55, 0.55],
-    target: [0.8, 2.25, -7.35],
-  },
-  {
-    id: 'front-row',
-    key: '4',
-    label: 'Front row',
-    position: [0, 1.18, -1.28],
-    target: [0, 2.36, -7.45],
-  },
-  {
-    id: 'projector-booth',
-    key: '5',
-    label: 'Projector booth',
-    position: [0, 3.6, 4.95],
-    target: [0, 2.2, -7.35],
+    position: [-5.35, 1.58, -0.65],
+    target: [-0.7, 2.42, -7.4],
   },
 ];
 
-const INITIAL_VIEWPOINT = VIEWPOINTS[0];
+const MYSTERY_SEAT_CANDIDATES: Array<Pick<Viewpoint, 'position' | 'target' | 'specialSeatId'>> = [
+  { position: seatPosition(2, 2), target: [-0.4, 2.46, -7.45], specialSeatId: '2:2' },
+  { position: seatPosition(5, 7), target: [0.65, 2.52, -7.35], specialSeatId: '5:7' },
+  { position: seatPosition(1, 2), target: [-0.35, 2.5, -7.45] },
+  { position: seatPosition(1, 6), target: [0.35, 2.5, -7.45] },
+  { position: seatPosition(3, 1), target: [-0.7, 2.5, -7.35] },
+  { position: seatPosition(3, 7), target: [0.7, 2.5, -7.35] },
+  { position: seatPosition(4, 3), target: [-0.3, 2.42, -7.35] },
+  { position: seatPosition(4, 5), target: [0.3, 2.42, -7.35] },
+];
+
+function createViewpoints() {
+  const shuffledSeats = [...MYSTERY_SEAT_CANDIDATES].sort(() => Math.random() - 0.5);
+  const mysteryViewpoints = shuffledSeats.slice(0, 2).map((seat, index) => ({
+    id: `mystery-point-${index + 1}`,
+    key: String(index + 3),
+    label: `Mystery point ${index + 1}`,
+    ...seat,
+  }));
+
+  return [...FIXED_VIEWPOINTS, ...mysteryViewpoints];
+}
 
 function useMediaItems() {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>(FALLBACK_MEDIA_ITEMS);
@@ -150,16 +164,42 @@ function useMediaItems() {
 }
 
 function App() {
+  const viewpoints = useMemo(() => createViewpoints(), []);
+  const mediaItems = useMediaItems();
   const [activeViewpointId, setActiveViewpointId] = useState(INITIAL_VIEWPOINT.id);
+  const [visibleCloudSeatId, setVisibleCloudSeatId] = useState<string | null>(null);
   const activeViewpoint =
-    VIEWPOINTS.find((viewpoint) => viewpoint.id === activeViewpointId) ?? INITIAL_VIEWPOINT;
+    viewpoints.find((viewpoint) => viewpoint.id === activeViewpointId) ?? INITIAL_VIEWPOINT;
+  const cloudImageSrc = useMemo(
+    () =>
+      mediaItems.find((item) => item.src && item.type === 'photo')?.src ??
+      mediaItems.find((item) => item.src)?.src,
+    [mediaItems],
+  );
+  const activeCloudSeatId =
+    activeViewpoint.specialSeatId && visibleCloudSeatId === activeViewpoint.specialSeatId
+      ? activeViewpoint.specialSeatId
+      : null;
+
+  function selectViewpoint(viewpoint: Viewpoint) {
+    setActiveViewpointId(viewpoint.id);
+    setVisibleCloudSeatId((currentSeatId) => {
+      if (!viewpoint.specialSeatId) {
+        return null;
+      }
+
+      return currentSeatId === viewpoint.specialSeatId && activeViewpointId === viewpoint.id
+        ? null
+        : viewpoint.specialSeatId;
+    });
+  }
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      const matchingViewpoint = VIEWPOINTS.find((viewpoint) => viewpoint.key === event.key);
+      const matchingViewpoint = viewpoints.find((viewpoint) => viewpoint.key === event.key);
 
       if (matchingViewpoint) {
-        setActiveViewpointId(matchingViewpoint.id);
+        selectViewpoint(matchingViewpoint);
       }
     };
 
@@ -168,7 +208,7 @@ function App() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [activeViewpointId, viewpoints]);
 
   return (
     <main className="app-shell">
@@ -195,24 +235,41 @@ function App() {
       <section className="hud">
         <p className="eyebrow">React Three Fiber cinema</p>
         <h1>{activeViewpoint.label}: drag to look around the cinema.</h1>
-        <p>Press 1-5 or use the buttons to move between curated viewpoints.</p>
+        <p>Press 1-4 or use the buttons to move between curated viewpoints.</p>
       </section>
 
       <section className="viewpoint-dock" aria-label="Cinema viewpoints">
-        {VIEWPOINTS.map((viewpoint) => (
+        {viewpoints.map((viewpoint) => (
           <button
             key={viewpoint.id}
             className={viewpoint.id === activeViewpoint.id ? 'active' : undefined}
             type="button"
-            onClick={() => setActiveViewpointId(viewpoint.id)}
+            onClick={() => selectViewpoint(viewpoint)}
           >
             <span>{viewpoint.key}</span>
             {viewpoint.label}
           </button>
         ))}
       </section>
+
+      {activeCloudSeatId && (
+        <MysteryCloud seatId={activeCloudSeatId} imageSrc={cloudImageSrc} />
+      )}
       <div className="vignette" />
     </main>
+  );
+}
+
+function MysteryCloud({ seatId, imageSrc }: { seatId: string; imageSrc?: string }) {
+  return (
+    <section className="mystery-cloud" aria-live="polite">
+      <p className="mystery-cloud__eyebrow">Gift clue found</p>
+      <h2>Row {seatId.split(':')[0]} Seat {seatId.split(':')[1]}</h2>
+      <div className="mystery-cloud__image">
+        {imageSrc ? <img src={encodeURI(imageSrc)} alt="Mystery clue" /> : <span>?</span>}
+      </div>
+      <p>Hit the same mystery point again to hide this cloud.</p>
+    </section>
   );
 }
 
@@ -528,34 +585,49 @@ function useMediaTexture(item: MediaItem) {
       };
     }
 
-    const loader = new THREE.TextureLoader();
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
     let imageTexture: THREE.Texture | null = null;
 
-    loader.load(
-      item.src,
-      (loadedTexture) => {
-        if (isDisposed) {
-          loadedTexture.dispose();
-          return;
-        }
+    image.onload = () => {
+      if (isDisposed) {
+        return;
+      }
 
-        loadedTexture.colorSpace = THREE.SRGBColorSpace;
-        loadedTexture.minFilter = THREE.LinearFilter;
-        loadedTexture.magFilter = THREE.LinearFilter;
-        imageTexture = loadedTexture;
-        setTexture(loadedTexture);
-      },
-      undefined,
-      () => {
-        if (!isDisposed) {
-          setTexture(null);
-        }
-      },
-    );
+      const maxTextureSize = 2048;
+      const scale = Math.min(1, maxTextureSize / Math.max(image.width, image.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      const context = canvas.getContext('2d');
+
+      if (!context) {
+        setTexture(null);
+        return;
+      }
+
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      imageTexture = new THREE.CanvasTexture(canvas);
+      imageTexture.colorSpace = THREE.SRGBColorSpace;
+      imageTexture.minFilter = THREE.LinearFilter;
+      imageTexture.magFilter = THREE.LinearFilter;
+      imageTexture.needsUpdate = true;
+      setTexture(imageTexture);
+    };
+
+    image.onerror = () => {
+      if (!isDisposed) {
+        setTexture(null);
+      }
+    };
+
+    image.src = encodeURI(item.src);
 
     return () => {
       isDisposed = true;
       imageTexture?.dispose();
+      image.onload = null;
+      image.onerror = null;
     };
   }, [item.src, item.type]);
 
@@ -610,7 +682,7 @@ function RollingMediaPanel({
         hasMedia={Boolean(mediaTexture)}
       />
       <mesh position={[0, 0.08, 0.07]}>
-        <planeGeometry args={[1.6, 0.82]} />
+        <planeGeometry args={[1.68, 0.9]} />
         <meshBasicMaterial
           color={mediaTexture ? '#ffffff' : base}
           map={mediaTexture ?? undefined}
@@ -622,7 +694,7 @@ function RollingMediaPanel({
         <meshBasicMaterial
           color={blendedAccent}
           transparent
-          opacity={mediaTexture ? 0.16 : 0.72}
+          opacity={mediaTexture ? 0.08 : 0.72}
           depthWrite={false}
         />
       </mesh>
@@ -631,7 +703,7 @@ function RollingMediaPanel({
         <meshBasicMaterial
           color={accent}
           transparent
-          opacity={mediaTexture ? 0.18 : 0.52}
+          opacity={mediaTexture ? 0.1 : 0.52}
           depthWrite={false}
         />
       </mesh>
@@ -646,17 +718,6 @@ function RollingMediaPanel({
       ) : (
         <PhotoSparkles color={item.accent} />
       )}
-      <Text
-        position={[-0.84, -0.49, 0.11]}
-        fontSize={0.1}
-        color="#ffffff"
-        anchorX="left"
-        anchorY="middle"
-        outlineColor="#000000"
-        outlineWidth={0.004}
-      >
-        {item.title}
-      </Text>
       <Text
         position={[0.82, -0.49, 0.11]}
         fontSize={0.08}
@@ -785,7 +846,7 @@ function PhotoSparkles({ color }: { color: string }) {
 function SeatRows() {
   const rows = useMemo(
     () =>
-      Array.from({ length: 4 }, (_, row) => ({
+      Array.from({ length: 5 }, (_, row) => ({
         row,
         z: -1.7 + row * 1.35,
         y: row * 0.08,
@@ -797,12 +858,12 @@ function SeatRows() {
     <group>
       {rows.map(({ row, z, y }) => (
         <group key={row} position={[0, y, z]}>
-          {[-3, -2, -1, 0, 1, 2, 3].map((column) => (
+          {SEAT_COLUMNS.map((column, seatIndex) => (
             <CinemaChair
               key={`${row}:${column}`}
               position={[column * 1.25, 0, 0]}
-              hasGift={GIFT_SEATS.has(`${row}:${column}`)}
-              label={`Hint ${row + 1}.${Math.abs(column) + 1}`}
+              hasGift={GIFT_SEATS.has(`${row + 1}:${seatIndex + 1}`)}
+              label={`Row ${row + 1} Seat ${seatIndex + 1}`}
             />
           ))}
         </group>
