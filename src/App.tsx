@@ -66,6 +66,8 @@ const FALLBACK_MEDIA_ITEMS: MediaItem[] = [
 ];
 
 const GIFT_SEATS = new Set(['0:-2', '1:1', '2:-1', '3:2']);
+const SEATED_CAMERA_POSITION: [number, number, number] = [0, 1.38, 1.72];
+const SEATED_CAMERA_TARGET: [number, number, number] = [0, 2.18, -7.35];
 
 function useMediaItems() {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>(FALLBACK_MEDIA_ITEMS);
@@ -106,7 +108,7 @@ function App() {
     <main className="app-shell">
       <Canvas
         shadows
-        camera={{ position: [0, 3.2, 8.5], fov: 48 }}
+        camera={{ position: SEATED_CAMERA_POSITION, fov: 58 }}
         gl={{ antialias: true }}
       >
         <color attach="background" args={['#030405']} />
@@ -126,8 +128,8 @@ function App() {
 
       <section className="hud">
         <p className="eyebrow">React Three Fiber cinema</p>
-        <h1>Drag to explore the floating screen and hidden chair gifts.</h1>
-        <p>Scroll to zoom. The glowing presents are hint markers tucked into the seats.</p>
+        <h1>You are seated in the middle row. Drag to look around the cinema.</h1>
+        <p>Scroll to zoom, then look across the chairs to find the glowing gift hints.</p>
       </section>
       <div className="vignette" />
     </main>
@@ -145,10 +147,10 @@ function CinemaScene() {
       <OrbitControls
         enableDamping
         dampingFactor={0.06}
-        minDistance={4.5}
-        maxDistance={14}
-        maxPolarAngle={Math.PI * 0.48}
-        target={[0, 1.5, -2.5]}
+        minDistance={1.2}
+        maxDistance={11}
+        maxPolarAngle={Math.PI * 0.58}
+        target={SEATED_CAMERA_TARGET}
       />
     </>
   );
