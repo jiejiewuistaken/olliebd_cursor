@@ -233,6 +233,7 @@ function App() {
   const [activeViewpoint, setActiveViewpoint] = useState<Viewpoint>(INITIAL_VIEWPOINT);
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
   const [visibleClueSeatId, setVisibleClueSeatId] = useState<string | null>(null);
+  const [selectedScreenMedia, setSelectedScreenMedia] = useState<MediaItem | null>(null);
   const [collectedClueIds, setCollectedClueIds] = useState<string[]>([]);
   const [isAlbumOpen, setIsAlbumOpen] = useState(false);
   const clueImageSrc = useMemo(
@@ -283,7 +284,7 @@ function App() {
         <color attach="background" args={['#07101b']} />
         <fog attach="fog" args={['#07101b', 10, 28]} />
         <Suspense fallback={null}>
-          <CinemaScene activeViewpoint={activeViewpoint} />
+          <CinemaScene activeViewpoint={activeViewpoint} onSelectScreenMedia={setSelectedScreenMedia} />
           <EffectComposer>
             <Bloom
               intensity={0.65}
@@ -320,8 +321,28 @@ function App() {
 
 
       {activeClue && <MysteryClueCard clue={activeClue} imageSrc={clueImageSrc} />}
+      {selectedScreenMedia && (
+        <PhotoNotePopup item={selectedScreenMedia} onClose={() => setSelectedScreenMedia(null)} />
+      )}
       <div className="vignette" />
     </main>
+  );
+}
+
+function PhotoNotePopup({ item, onClose }: { item: MediaItem; onClose: () => void }) {
+  return (
+    <section className="photo-note-overlay" onClick={onClose}>
+      <article className="photo-note" onClick={(event) => event.stopPropagation()}>
+        <p className="photo-note__eyebrow">A note from this frame</p>
+        <div className="photo-note__paper">
+          <p>
+            This little frame kept one quiet piece of the journey. Some scenes are not gifts yet;
+            they are clues waiting for the right birthday ending.
+          </p>
+        </div>
+        <button type="button" onClick={onClose}>Close note</button>
+      </article>
+    </section>
   );
 }
 
@@ -385,8 +406,28 @@ function ClueLogo({ clue, isCollected }: { clue: Clue; isCollected: boolean }) {
     <span className={
       `clue-logo clue-logo--${clue.symbol} clue-logo--${clue.palette} ${isCollected ? 'collected' : ''}`
     }>
-      <span />
+      {clue.symbol === 'cat-orbit' ? <CatOrbitSketch /> : <span />}
     </span>
+  );
+}
+
+function CatOrbitSketch() {
+  return (
+    <svg className="cat-orbit-sketch" viewBox="0 0 100 100" aria-hidden="true">
+      <circle className="cat-orbit-sketch__circle" cx="50" cy="50" r="34" />
+      <circle className="cat-orbit-sketch__circle cat-orbit-sketch__circle--draft" cx="50" cy="50" r="38" />
+      <g className="cat-orbit-sketch__cat">
+        <ellipse cx="50" cy="18" rx="10" ry="7" />
+        <circle cx="39" cy="15" r="6" />
+        <path d="M35 11 L37 4 L41 11" />
+        <path d="M42 11 L46 5 L47 14" />
+        <path d="M58 18 C68 13 70 25 62 27" />
+        <path d="M44 20 L42 27" />
+        <path d="M53 21 L55 28" />
+        <circle cx="37.5" cy="15" r="1" />
+        <circle cx="41.5" cy="15" r="1" />
+      </g>
+    </svg>
   );
 }
 
@@ -461,7 +502,13 @@ function MysteryClueCard({ clue, imageSrc }: { clue: Clue; imageSrc?: string }) 
   );
 }
 
-function CinemaScene({ activeViewpoint }: { activeViewpoint: Viewpoint }) {
+function CinemaScene({
+  activeViewpoint,
+  onSelectScreenMedia,
+}: {
+  activeViewpoint: Viewpoint;
+  onSelectScreenMedia: (item: MediaItem) => void;
+}) {
   const controls = useRef<any>(null);
 
   return (
@@ -469,7 +516,7 @@ function CinemaScene({ activeViewpoint }: { activeViewpoint: Viewpoint }) {
       <ambientLight intensity={0.08} />
       <ProjectorLightRig />
       <CinemaRoom />
-      <FloatingScreen />
+      <FloatingScreen onSelectMedia={onSelectScreenMedia} />
       <SeatRows />
       <WaypointCameraController activeViewpoint={activeViewpoint} controlsRef={controls} />
       <OrbitControls
@@ -726,20 +773,10 @@ function AisleLights() {
   );
 }
 
-function FloatingScreen() {
+function FloatingScreen({ onSelectMedia }: { onSelectMedia: (item: MediaItem) => void }) {
   return (
     <Float speed={1.2} rotationIntensity={0.035} floatIntensity={0.16}>
       <group position={[0, 2.72, -7.45]} rotation={[0.02, 0, 0]}>
-        <mesh position={[0, 0, -0.06]}>
-          <boxGeometry args={[6.9, 3.15, 0.12]} />
-          <meshStandardMaterial
-            color="#08090d"
-            emissive="#0b1425"
-            emissiveIntensity={0.9}
-            metalness={0.2}
-            roughness={0.32}
-          />
-        </mesh>
         <mesh position={[0, 0, 0]}>
           <planeGeometry args={[6.45, 2.75]} />
           <meshStandardMaterial
@@ -749,8 +786,20 @@ function FloatingScreen() {
             roughness={0.18}
           />
         </mesh>
+        <Text
+          position={[0, 0.02, -0.08]}
+          rotation={[0, Math.PI, 0]}
+          fontSize={0.42}
+          color="#ffdf8b"
+          anchorX="center"
+          anchorY="middle"
+          outlineColor="#080405"
+          outlineWidth={0.018}
+        >
+          Happy Birthday Ollie
+        </Text>
         <ScreenGlow />
-        <RollingMediaStrip />
+        <RollingMediaStrip onSelectMedia={onSelectMedia} />
         <mesh position={[0, 0, 0.08]}>
           <ringGeometry args={[3.55, 3.7, 4]} />
           <meshBasicMaterial
@@ -793,7 +842,7 @@ function ScreenGlow() {
   );
 }
 
-function RollingMediaStrip() {
+function RollingMediaStrip({ onSelectMedia }: { onSelectMedia: (item: MediaItem) => void }) {
   const mediaItems = useMediaItems();
 
   return (
@@ -804,6 +853,7 @@ function RollingMediaStrip() {
           item={item}
           index={index}
           itemCount={mediaItems.length}
+          onSelectMedia={onSelectMedia}
         />
       ))}
       <mesh position={[-3.45, 0, 0.06]}>
@@ -909,13 +959,15 @@ function RollingMediaPanel({
   item,
   index,
   itemCount,
+  onSelectMedia,
 }: {
   item: MediaItem;
   index: number;
   itemCount: number;
+  onSelectMedia: (item: MediaItem) => void;
 }) {
   const group = useRef<THREE.Group>(null);
-  const mediaTexture = useMediaTexture(item);
+  const hasMedia = Boolean(item.src);
   const accent = new THREE.Color(item.accent);
   const base = new THREE.Color(item.colorA);
   const dark = new THREE.Color(item.colorB);
@@ -950,22 +1002,39 @@ function RollingMediaPanel({
         accent={item.accent}
         base={item.colorA}
         dark={item.colorB}
-        hasMedia={Boolean(mediaTexture)}
+        hasMedia={hasMedia}
       />
       <mesh position={[0, 0.08, 0.07]}>
         <planeGeometry args={[1.68, 0.9]} />
         <meshBasicMaterial
-          color={mediaTexture ? '#ffffff' : base}
-          map={mediaTexture ?? undefined}
+          color={hasMedia ? '#050607' : base}
           toneMapped={false}
         />
       </mesh>
+      {item.src && (
+        <Html transform position={[0, 0.08, 0.16]} className="screen-media-html" zIndexRange={[20, 0]}>
+          <button
+            className="screen-media-button"
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onSelectMedia(item);
+            }}
+          >
+            {item.type === 'video' ? (
+              <video src={item.src} muted loop autoPlay playsInline />
+            ) : (
+              <img src={item.src} alt="Cinema frame" />
+            )}
+          </button>
+        </Html>
+      )}
       <mesh position={[-0.34, -0.06, 0.09]} rotation={[0, 0, -0.26]}>
         <planeGeometry args={[0.92, 0.62]} />
         <meshBasicMaterial
           color={blendedAccent}
           transparent
-          opacity={mediaTexture ? 0.08 : 0.72}
+          opacity={hasMedia ? 0.06 : 0.72}
           depthWrite={false}
         />
       </mesh>
@@ -974,7 +1043,7 @@ function RollingMediaPanel({
         <meshBasicMaterial
           color={accent}
           transparent
-          opacity={mediaTexture ? 0.1 : 0.52}
+          opacity={hasMedia ? 0.08 : 0.52}
           depthWrite={false}
         />
       </mesh>
@@ -989,15 +1058,6 @@ function RollingMediaPanel({
       ) : (
         <PhotoSparkles color={item.accent} />
       )}
-      <Text
-        position={[0.82, -0.49, 0.11]}
-        fontSize={0.08}
-        color={item.accent}
-        anchorX="right"
-        anchorY="middle"
-      >
-        {item.type.toUpperCase()}
-      </Text>
     </group>
   );
 }
