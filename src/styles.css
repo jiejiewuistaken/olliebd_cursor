@@ -118,7 +118,7 @@ select {
   position: fixed;
   right: clamp(1rem, 3vw, 2rem);
   bottom: clamp(1rem, 4vw, 2.5rem);
-  z-index: 3;
+  z-index: 7;
   width: min(24rem, calc(100vw - 2rem));
   padding: 0.9rem;
   border: 1px solid rgba(255, 210, 142, 0.24);
@@ -206,11 +206,19 @@ select {
   }
 }
 
-.mystery-card {
+.mystery-card-overlay {
   position: fixed;
-  left: 50%;
-  top: clamp(1rem, 8vh, 4rem);
-  z-index: 4;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: start center;
+  padding-top: clamp(1rem, 8vh, 4rem);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.mystery-card {
+  position: relative;
+  z-index: 6;
   display: grid;
   grid-template-columns: 1.1rem 1fr 1.1rem;
   width: min(21rem, calc(100vw - 2rem));
@@ -224,7 +232,6 @@ select {
     0 1.4rem 4rem rgba(0, 0, 0, 0.44),
     0 0 3rem rgba(255, 168, 57, 0.26);
   color: #fff7e6;
-  transform: translateX(-50%);
   animation: clue-card-pop 420ms cubic-bezier(0.2, 0.9, 0.24, 1.2);
 }
 
@@ -316,11 +323,11 @@ select {
 @keyframes clue-card-pop {
   from {
     opacity: 0;
-    transform: translate(-50%, -0.7rem) rotateX(18deg) scale(0.9);
+    transform: translateY(-0.7rem) rotateX(18deg) scale(0.9);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, 0) rotateX(0deg) scale(1);
+    transform: translateY(0) rotateX(0deg) scale(1);
   }
 }
 
@@ -338,7 +345,7 @@ select {
   position: fixed;
   left: clamp(1rem, 3vw, 2rem);
   top: clamp(1rem, 4vw, 2rem);
-  z-index: 5;
+  z-index: 8;
   display: grid;
   gap: 0.65rem;
   width: min(20rem, calc(100vw - 2rem));
@@ -531,12 +538,88 @@ select {
   stroke-linecap: round;
   stroke-linejoin: round;
   transform-origin: 50px 50px;
-  animation: svg-cat-orbit 5.5s linear infinite;
+  animation: svg-cat-orbit 5.5s linear infinite reverse;
 }
 
 .cat-orbit-sketch__cat circle:nth-of-type(n + 2) {
   fill: #ffe7a8;
   stroke: none;
+}
+
+
+.clue-logo--europe-lens::before {
+  width: 1.7rem;
+  height: 1.25rem;
+  border: 0.12rem solid rgba(255, 241, 201, 0.9);
+  border-radius: 46% 54% 50% 42%;
+  background: rgba(255, 241, 201, 0.13);
+  clip-path: polygon(12% 16%, 46% 4%, 75% 19%, 65% 43%, 88% 57%, 62% 76%, 66% 98%, 38% 78%, 16% 91%, 22% 60%, 4% 45%);
+}
+
+.clue-logo--europe-lens::after {
+  width: 0.86rem;
+  height: 0.86rem;
+  border: 0.12rem solid #050506;
+  border-radius: 50%;
+  box-shadow: 0.38rem 0.38rem 0 -0.08rem #050506;
+  animation: lens-scan 2.6s ease-in-out infinite alternate;
+}
+
+.clue-logo--chopsticks::before,
+.clue-logo--chopsticks::after {
+  width: 0.12rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: #050506;
+  transform-origin: 50% 90%;
+}
+
+.clue-logo--chopsticks::before {
+  transform: translateX(-0.35rem) rotate(-22deg);
+  animation: chopstick-left 1.05s ease-in-out infinite;
+}
+
+.clue-logo--chopsticks::after {
+  transform: translateX(0.35rem) rotate(22deg);
+  animation: chopstick-right 1.05s ease-in-out infinite;
+}
+
+.clue-logo--mystery::before {
+  width: 1.7rem;
+  height: 1.7rem;
+  border: 0.12rem dashed rgba(255, 241, 201, 0.8);
+  border-radius: 50%;
+  animation: mystery-spin 3s linear infinite;
+}
+
+.clue-logo--mystery::after {
+  content: "?";
+  display: grid;
+  width: 1.2rem;
+  height: 1.2rem;
+  place-items: center;
+  color: #050506;
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+@keyframes lens-scan {
+  from { transform: translate(-0.38rem, -0.18rem) rotate(-12deg); }
+  to { transform: translate(0.38rem, 0.22rem) rotate(16deg); }
+}
+
+@keyframes chopstick-left {
+  0%, 100% { transform: translateX(-0.35rem) rotate(-26deg); }
+  50% { transform: translateX(-0.18rem) rotate(-8deg); }
+}
+
+@keyframes chopstick-right {
+  0%, 100% { transform: translateX(0.35rem) rotate(26deg); }
+  50% { transform: translateX(0.18rem) rotate(8deg); }
+}
+
+@keyframes mystery-spin {
+  to { transform: rotate(360deg); }
 }
 
 .mystery-card .clue-logo--cat-orbit {
@@ -620,7 +703,7 @@ select {
   position: fixed;
   top: clamp(1rem, 3vw, 2rem);
   right: clamp(1rem, 3vw, 2rem);
-  z-index: 5;
+  z-index: 8;
   display: grid;
   width: 4.6rem;
   height: 4.6rem;
@@ -670,33 +753,6 @@ select {
 }
 
 
-
-.screen-media-html {
-  pointer-events: auto;
-}
-
-.screen-media-button {
-  display: block;
-  width: 10.4rem;
-  height: 5.65rem;
-  padding: 0;
-  overflow: hidden;
-  border: 0.12rem solid rgba(255, 239, 207, 0.86);
-  border-radius: 0.34rem;
-  background: #050607;
-  box-shadow:
-    0 0.4rem 1.2rem rgba(0, 0, 0, 0.26),
-    0 0 1.2rem rgba(94, 250, 255, 0.12);
-  cursor: pointer;
-}
-
-.screen-media-button img,
-.screen-media-button video {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
 
 .photo-note-overlay {
   position: fixed;
