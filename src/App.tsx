@@ -69,9 +69,6 @@ const SEAT_LAYOUT = [7, 9, 10] as const;
 const SEAT_SPACING = 1.08;
 const ROW_DEPTH = 1.35;
 const FIRST_ROW_Z = -1.95;
-const SPECIAL_SEATS = new Set(['1:3', '1:6', '2:2', '2:7', '3:4', '3:9']);
-const GIFT_SEATS = SPECIAL_SEATS;
-const SCREEN_TARGET: [number, number, number] = [0, 2.55, -7.45];
 
 type SeatRef = {
   row: number;
@@ -91,6 +88,15 @@ function seatPosition(rowNumber: number, seatNumber: number): [number, number, n
   return [centeredSeatIndex * SEAT_SPACING, rowIndex * 0.08, FIRST_ROW_Z + rowIndex * ROW_DEPTH];
 }
 
+type Viewpoint = {
+  id: string;
+  key: string;
+  label: string;
+  position: [number, number, number];
+  target: [number, number, number];
+  specialSeatId?: string;
+};
+
 function seatViewpoint(rowNumber: number, seatNumber: number): Viewpoint {
   const [x, , z] = seatPosition(rowNumber, seatNumber);
   const eyeHeight = 1.52 + (rowNumber - 1) * 0.1;
@@ -106,15 +112,6 @@ function seatViewpoint(rowNumber: number, seatNumber: number): Viewpoint {
   };
 }
 
-type Viewpoint = {
-  id: string;
-  key: string;
-  label: string;
-  position: [number, number, number];
-  target: [number, number, number];
-  specialSeatId?: string;
-};
-
 type Clue = {
   seatId: string;
   title: string;
@@ -122,6 +119,10 @@ type Clue = {
   symbol: string;
   palette: 'cyan' | 'gold';
 };
+
+const SPECIAL_SEATS = new Set(['1:3', '1:6', '2:5', '3:8']);
+const GIFT_SEATS = SPECIAL_SEATS;
+const SCREEN_TARGET: [number, number, number] = [0, 2.55, -7.45];
 
 const SOUNDTRACK_TITLE = 'Birthday Cinema Soundtrack';
 
@@ -135,37 +136,23 @@ const CLUES: Clue[] = [
   },
   {
     seatId: '1:6',
-    title: 'Window Magnet',
-    hint: 'A tiny clear window remembers a city better than a suitcase can.',
-    symbol: 'stamp',
-    palette: 'gold',
-  },
-  {
-    seatId: '2:2',
-    title: 'Moonlit Ticket',
-    hint: 'For the nights when distance is loud, press play and let this little light answer back.',
-    symbol: 'moon',
-    palette: 'cyan',
-  },
-  {
-    seatId: '2:7',
     title: 'Borderless Map',
-    hint: 'Not a route yet, but it already knows which direction feels warm.',
-    symbol: 'stamp',
+    hint: 'A tiny continent waits under glass; the lens keeps searching for one warm route.',
+    symbol: 'europe-lens',
     palette: 'gold',
   },
   {
-    seatId: '3:4',
-    title: 'Commentary Track',
-    hint: 'A voice behind the screen, explaining the part that subtitles missed.',
-    symbol: 'moon',
+    seatId: '2:5',
+    title: 'Two Small Sticks',
+    hint: 'Two thin lines meet and tap, like a rhythm saved for a table across the sea.',
+    symbol: 'chopsticks',
     palette: 'cyan',
   },
   {
-    seatId: '3:9',
-    title: 'Postcard Reel',
-    hint: 'Not a plane ticket yet, but it knows the direction of a future arrival.',
-    symbol: 'stamp',
+    seatId: '3:8',
+    title: 'Mystery Reel',
+    hint: 'This frame refuses to explain itself. Some birthday scenes should stay half-hidden.',
+    symbol: 'mystery',
     palette: 'gold',
   },
 ];
@@ -233,7 +220,6 @@ function App() {
   const [activeViewpoint, setActiveViewpoint] = useState<Viewpoint>(INITIAL_VIEWPOINT);
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
   const [visibleClueSeatId, setVisibleClueSeatId] = useState<string | null>(null);
-  const [selectedScreenMedia, setSelectedScreenMedia] = useState<MediaItem | null>(null);
   const [collectedClueIds, setCollectedClueIds] = useState<string[]>([]);
   const [isAlbumOpen, setIsAlbumOpen] = useState(false);
   const clueImageSrc = useMemo(
@@ -284,7 +270,7 @@ function App() {
         <color attach="background" args={['#07101b']} />
         <fog attach="fog" args={['#07101b', 10, 28]} />
         <Suspense fallback={null}>
-          <CinemaScene activeViewpoint={activeViewpoint} onSelectScreenMedia={setSelectedScreenMedia} />
+          <CinemaScene activeViewpoint={activeViewpoint} />
           <EffectComposer>
             <Bloom
               intensity={0.65}
@@ -320,29 +306,15 @@ function App() {
       />
 
 
-      {activeClue && <MysteryClueCard clue={activeClue} imageSrc={clueImageSrc} />}
-      {selectedScreenMedia && (
-        <PhotoNotePopup item={selectedScreenMedia} onClose={() => setSelectedScreenMedia(null)} />
+      {activeClue && (
+        <MysteryClueOverlay
+          clue={activeClue}
+          imageSrc={clueImageSrc}
+          onClose={() => setVisibleClueSeatId(null)}
+        />
       )}
       <div className="vignette" />
     </main>
-  );
-}
-
-function PhotoNotePopup({ item, onClose }: { item: MediaItem; onClose: () => void }) {
-  return (
-    <section className="photo-note-overlay" onClick={onClose}>
-      <article className="photo-note" onClick={(event) => event.stopPropagation()}>
-        <p className="photo-note__eyebrow">A note from this frame</p>
-        <div className="photo-note__paper">
-          <p>
-            This little frame kept one quiet piece of the journey. Some scenes are not gifts yet;
-            they are clues waiting for the right birthday ending.
-          </p>
-        </div>
-        <button type="button" onClick={onClose}>Close note</button>
-      </article>
-    </section>
   );
 }
 
@@ -481,11 +453,23 @@ function CinemaTicketAlbum({
   );
 }
 
-function MysteryClueCard({ clue, imageSrc }: { clue: Clue; imageSrc?: string }) {
+function MysteryClueOverlay({
+  clue,
+  imageSrc,
+  onClose,
+}: {
+  clue: Clue;
+  imageSrc?: string;
+  onClose: () => void;
+}) {
   const [row, seat] = clue.seatId.split(':');
 
   return (
-    <section className={`mystery-card mystery-card--${clue.palette}`} aria-live="polite">
+    <section className="mystery-card-overlay" aria-live="polite" onClick={onClose}>
+      <article
+        className={`mystery-card mystery-card--${clue.palette}`}
+        onClick={(event) => event.stopPropagation()}
+      >
       <div className="mystery-card__sprockets" aria-hidden="true" />
       <div className="mystery-card__content">
         <p className="mystery-card__eyebrow">Found frame</p>
@@ -498,17 +482,12 @@ function MysteryClueCard({ clue, imageSrc }: { clue: Clue; imageSrc?: string }) 
         <p>{clue.hint}</p>
       </div>
       <div className="mystery-card__sprockets" aria-hidden="true" />
+      </article>
     </section>
   );
 }
 
-function CinemaScene({
-  activeViewpoint,
-  onSelectScreenMedia,
-}: {
-  activeViewpoint: Viewpoint;
-  onSelectScreenMedia: (item: MediaItem) => void;
-}) {
+function CinemaScene({ activeViewpoint }: { activeViewpoint: Viewpoint }) {
   const controls = useRef<any>(null);
 
   return (
@@ -516,7 +495,7 @@ function CinemaScene({
       <ambientLight intensity={0.08} />
       <ProjectorLightRig />
       <CinemaRoom />
-      <FloatingScreen onSelectMedia={onSelectScreenMedia} />
+      <FloatingScreen />
       <SeatRows />
       <WaypointCameraController activeViewpoint={activeViewpoint} controlsRef={controls} />
       <OrbitControls
@@ -773,7 +752,7 @@ function AisleLights() {
   );
 }
 
-function FloatingScreen({ onSelectMedia }: { onSelectMedia: (item: MediaItem) => void }) {
+function FloatingScreen() {
   return (
     <Float speed={1.2} rotationIntensity={0.035} floatIntensity={0.16}>
       <group position={[0, 2.72, -7.45]} rotation={[0.02, 0, 0]}>
@@ -799,7 +778,7 @@ function FloatingScreen({ onSelectMedia }: { onSelectMedia: (item: MediaItem) =>
           Happy Birthday Ollie
         </Text>
         <ScreenGlow />
-        <RollingMediaStrip onSelectMedia={onSelectMedia} />
+        <RollingMediaStrip />
         <mesh position={[0, 0, 0.08]}>
           <ringGeometry args={[3.55, 3.7, 4]} />
           <meshBasicMaterial
@@ -842,7 +821,7 @@ function ScreenGlow() {
   );
 }
 
-function RollingMediaStrip({ onSelectMedia }: { onSelectMedia: (item: MediaItem) => void }) {
+function RollingMediaStrip() {
   const mediaItems = useMediaItems();
 
   return (
@@ -853,7 +832,6 @@ function RollingMediaStrip({ onSelectMedia }: { onSelectMedia: (item: MediaItem)
           item={item}
           index={index}
           itemCount={mediaItems.length}
-          onSelectMedia={onSelectMedia}
         />
       ))}
       <mesh position={[-3.45, 0, 0.06]}>
@@ -959,14 +937,13 @@ function RollingMediaPanel({
   item,
   index,
   itemCount,
-  onSelectMedia,
 }: {
   item: MediaItem;
   index: number;
   itemCount: number;
-  onSelectMedia: (item: MediaItem) => void;
 }) {
   const group = useRef<THREE.Group>(null);
+  const mediaTexture = useMediaTexture(item);
   const hasMedia = Boolean(item.src);
   const accent = new THREE.Color(item.accent);
   const base = new THREE.Color(item.colorA);
@@ -1007,28 +984,11 @@ function RollingMediaPanel({
       <mesh position={[0, 0.08, 0.07]}>
         <planeGeometry args={[1.68, 0.9]} />
         <meshBasicMaterial
-          color={hasMedia ? '#050607' : base}
+          color={mediaTexture ? '#ffffff' : base}
+          map={mediaTexture ?? undefined}
           toneMapped={false}
         />
       </mesh>
-      {item.src && (
-        <Html transform position={[0, 0.08, 0.16]} className="screen-media-html" zIndexRange={[20, 0]}>
-          <button
-            className="screen-media-button"
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              onSelectMedia(item);
-            }}
-          >
-            {item.type === 'video' ? (
-              <video src={item.src} muted loop autoPlay playsInline />
-            ) : (
-              <img src={item.src} alt="Cinema frame" />
-            )}
-          </button>
-        </Html>
-      )}
       <mesh position={[-0.34, -0.06, 0.09]} rotation={[0, 0, -0.26]}>
         <planeGeometry args={[0.92, 0.62]} />
         <meshBasicMaterial
