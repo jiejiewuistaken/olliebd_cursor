@@ -2,6 +2,8 @@ import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
 
+import { cloudflare } from "@cloudflare/vite-plugin";
+
 function staleDreiBloomCompatibility(): Plugin {
   return {
     name: 'stale-drei-bloom-compatibility',
@@ -21,7 +23,7 @@ function staleDreiBloomCompatibility(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), staleDreiBloomCompatibility()],
+  plugins: [react(), staleDreiBloomCompatibility(), cloudflare()],
   resolve: {
     alias: [
       {
