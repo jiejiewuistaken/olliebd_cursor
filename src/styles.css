@@ -1751,6 +1751,10 @@ select {
   user-select: none;
 }
 
+.app-shell--house-dim .still-caption {
+  display: none !important;
+}
+
 .still-caption div {
   width: 9.5rem;
   padding: 0.32rem 0.42rem;

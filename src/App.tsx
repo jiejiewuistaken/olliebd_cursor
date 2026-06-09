@@ -1419,7 +1419,7 @@ function FloatingScreen({
     setBehindScreen((current) => (current === next ? current : next));
   });
 
-  const captionsVisible = showCaptions && !behindScreen;
+  const captionsVisible = showCaptions && !behindScreen && houseLightsBright;
   const screenMaterial = useRef<THREE.MeshStandardMaterial>(null);
   const ringMaterial = useRef<THREE.MeshBasicMaterial>(null);
 
