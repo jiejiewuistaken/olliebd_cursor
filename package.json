@@ -7,10 +7,11 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "vite --host 0.0.0.0 --port 5174 --strictPort --force",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview --host 0.0.0.0",
+    "preview": "npm run build && wrangler dev",
     "generate:media": "node scripts/generate-media-manifest.mjs",
     "predev": "npm run generate:media",
-    "prebuild": "npm run generate:media"
+    "prebuild": "npm run generate:media",
+    "deploy": "npm run build && wrangler deploy"
   },
   "repository": {
     "type": "git",
@@ -32,11 +33,13 @@
     "three": "^0.184.0"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.40.0",
     "@types/react": "^19.2.16",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
     "typescript": "^6.0.3",
-    "vite": "^8.0.16"
+    "vite": "^8.0.16",
+    "wrangler": "^4.98.0"
   },
   "type": "module",
   "private": "true"
